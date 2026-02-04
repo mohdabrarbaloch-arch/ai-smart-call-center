@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Smart Call Center | Agent Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome removed due to access restrictions -->
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar / Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>AI Connect</h2>
+                <span class="status-dot online"></span>
+            </div>
+            <nav>
+                <ul>
+                    <li class="active">Dashboard</li>
+                    <li>Call Logs</li>
+                    <li>Analytics</li>
+                    <li>Settings</li>
+                </ul>
+            </nav>
+            <div class="agent-profile">
+                <div class="avatar">DA</div>
+                <div class="info">
+                    <p>Digital Agent</p>
+                    <small>System Online</small>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header>
+                <h1>Live Operations Center</h1>
+                <div class="system-status">
+                    <span class="badge">System: Operational</span>
+                    <span class="badge">Voice Gateway: Active</span>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- Left Panel: Active Call & Routing -->
+                <div class="card active-call-card">
+                    <div class="card-header">
+                        <h3>Active Line</h3>
+                        <div class="live-indicator">LIVE</div>
+                    </div>
+
+                    <div id="call-status-screen" class="call-screen idle">
+                        <div class="caller-avatar-large">
+                            <!-- Helper for offline usage -->
+                            <span>👤</span>
+                        </div>
+                        <h2 id="caller-id">No Active Call</h2>
+                        <h1 id="timer">00:00</h1>
+                        <p id="call-status-text">Waiting for incoming connection...</p>
+
+                        <!-- Visual Waveform for Voice Activity -->
+                        <div class="waveform-container hidden" id="waveform">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
+                    </div>
+
+                    <div class="control-actions">
+                        <button id="btn-simulate" class="btn primary">Simulate Incoming Call</button>
+                        <div id="active-controls" class="hidden">
+                            <button id="btn-mute" class="btn secondary">Mute</button>
+                            <button id="btn-hangup" class="btn danger">End Call</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Panel: Live Transcript -->
+                <div class="card transcript-card">
+                    <div class="card-header">
+                        <h3>Real-time Transcript</h3>
+                        <span class="badge transcription-status">Listening...</span>
+                    </div>
+                    <div id="transcript-box" class="transcript-box">
+                        <div class="message system">System ready. Waiting for call...</div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: AI Analysis (Department & Mood) -->
+                <div class="right-panel">
+                    <!-- Department Routing -->
+                    <div class="card department-card">
+                        <h3>Active Agent / Department</h3>
+                        <div class="departments-grid">
+                            <div class="dept-badge active" id="dept-reception">Reception</div>
+                            <div class="dept-badge" id="dept-sales">Sales</div>
+                            <div class="dept-badge" id="dept-marketing">Marketing</div>
+                            <div class="dept-badge" id="dept-refunds">Refunds</div>
+                            <div class="dept-badge" id="dept-inventory">Inventory</div>
+                        </div>
+                    </div>
+
+                    <!-- Sentiment Analysis -->
+                    <div class="card sentiment-card">
+                        <h3>Customer Mood</h3>
+                        <div class="mood-meter">
+                            <div class="mood-label" id="mood-text">Neutral</div>
+                            <div class="mood-bar-bg">
+                                <div class="mood-bar-fill" id="mood-bar" style="width: 50%;"></div>
+                            </div>
+                        </div>
+                        <div class="intent-box">
+                            <h4>Detected Intent</h4>
+                            <p id="intent-text">--</p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Logs -->
+                    <div class="card logs-card">
+                        <h3>Recent Activity</h3>
+                        <ul id="activity-log" class="log-list">
+                            <!-- Logs will be injected here -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Incoming Call Modal -->
+    <div id="incoming-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="incoming-ring">
+                <div class="ring-circle"></div>
+                <div class="ring-circle"></div>
+            </div>
+            <h2>Incoming Call...</h2>
+            <p>Customer: +92 300 1234567</p>
+            <div class="modal-actions">
+                <button id="btn-accept" class="btn success-lg">Answer</button>
+                <button id="btn-decline" class="btn danger-lg">Decline</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
