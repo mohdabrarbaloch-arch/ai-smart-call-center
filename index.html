@@ -145,6 +145,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
 .transcript-container{height:170px;padding:10px;font-size:0.8rem}
 .call-footer{gap:6px}
 .call-footer .btn{font-size:0.75rem;padding:10px;min-height:38px}
+.text-input-bar{display:flex;gap:6px;padding:8px 12px 12px}
+.text-input-bar input{flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color .3s}
+.text-input-bar input:focus{border-color:var(--primary)}
+.text-input-bar input::placeholder{color:var(--dim)}
+.text-input-bar button{background:var(--primary);border:none;border-radius:10px;padding:10px 18px;color:#fff;font-weight:600;font-size:0.8rem;cursor:pointer;transition:opacity .3s}
+.text-input-bar button:hover{opacity:0.85}
 }
 </style>
 </head>
@@ -246,6 +252,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
           <button class="btn btn-talk" id="btnTalk" disabled>🎤 Press to Talk</button>
           <button class="btn btn-end" id="btnEndCall">✕ End</button>
         </div>
+        <div class="text-input-bar" id="textInputBar" style="display:none">
+          <input type="text" id="textInput" autocomplete="off">
+          <button id="btnSendText">Send</button>
+        </div>
       </div>
     </div>
 
@@ -270,11 +280,11 @@ const I18N = {
     mute:"Mute","unmute":"Unmute",
     transfer:"Transfer",endCall:"End",
     pressTalk:"Press to Talk",
-    releaseTalk:"Release to send",
+    releaseTalk:"Listening...",
     connected:"Connected",ended:"Call Ended",
     micReady:"Mic ready",
     micListening:"Listening...",
-    micClick:"Click mic to speak"
+    inputPlaceholder:"Type your message..."
   },
   ur: {
     welcomeTitle:"CallFlow mein khush aamdeed",
@@ -287,11 +297,11 @@ const I18N = {
     mute:"Khamosh","unmute":"Aawaz on",
     transfer:"Muntaqil karein",endChat:"Khatam",
     pressTalk:"Bolne k liye dabayein",
-    releaseTalk:"Chhorne pe bhejein",
+    releaseTalk:"Sun raha hai...",
     connected:"Munsal",ended:"Call khatam",
     micReady:"Mic tayaar",
     micListening:"Sun raha hai...",
-    micClick:"Bolne k liye dabayein"
+    inputPlaceholder:"Apna paigham likhein..."
   }
 };
 
@@ -473,6 +483,9 @@ class CallFlowEngine {
     this.btnTransfer=this.$('btnTransfer');
     this.btnTalk=this.$('btnTalk');
     this.btnEndCall=this.$('btnEndCall');
+    this.textInputBar=this.$('textInputBar');
+    this.textInput=this.$('textInput');
+    this.btnSendText=this.$('btnSendText');
     this.langButtons=document.querySelectorAll('#langSelector button');
     this.agentItems=document.querySelectorAll('.agent-item');
   }
@@ -536,6 +549,10 @@ class CallFlowEngine {
     this.btnEndCall.addEventListener('click',()=>this.endCall());
     this.btnTransfer.addEventListener('click',()=>this.showTransferMenu());
 
+    // Text input
+    this.textInput.addEventListener('keydown',e=>{if(e.key==='Enter')this.sendTextMessage();});
+    this.btnSendText.addEventListener('click',()=>this.sendTextMessage());
+
     // Talk button - click toggle (works on desktop + mobile)
     this.btnTalk.addEventListener('click',e=>this.toggleTalk());
 
@@ -564,6 +581,7 @@ class CallFlowEngine {
     this.btnMute.textContent=this.isMuted?('🔊 '+(this.lang==='ur'?'Aawaz on':'Unmute')):('🔇 '+(this.lang==='ur'?'Khamosh':'Mute'));
     this.btnTransfer.textContent='🔄 '+t.transfer;
     this.btnEndCall.textContent='✕ '+t.endCall;
+    if(this.textInput) this.textInput.placeholder=t.inputPlaceholder;
     if(this.state==='ended') this.btnTalk.style.display='none';
     if(this.callStatus) this.callStatus.textContent='● '+(this.state==='ended'?t.ended:t.connected);
   }
@@ -638,6 +656,9 @@ class CallFlowEngine {
     this.callStatus.style.color='var(--success)';
     this.btnTalk.disabled=false;
     this.btnTalk.textContent=I18N[this.lang].pressTalk;
+    this.textInputBar.style.display='flex';
+    this.textInput.placeholder=I18N[this.lang].inputPlaceholder;
+    this.textInput.focus();
     this.updateAgentUI();
     this.timerInterval=setInterval(()=>{
       const d=Math.floor((Date.now()-this.callStartTime)/1000);
@@ -716,6 +737,14 @@ class CallFlowEngine {
       try{this._currentRecog.stop()}catch(e){}
       this._currentRecog=null;
     }
+  }
+
+  sendTextMessage(){
+    const t=this.textInput.value.trim();
+    if(!t) return;
+    this.textInput.value='';
+    this.addMessage(t,'user');
+    this.handleUserInput(t);
   }
 
   async handleUserInput(text){
@@ -844,6 +873,7 @@ class CallFlowEngine {
     this.callStatus.textContent='● Call Ended';
     this.callStatus.style.color='var(--dim)';
     this.btnTalk.disabled=true;
+    this.textInputBar.style.display='none';
     this.addMessage(this.lang==='ur'?'Call khatam. Shukriya!':'Call ended. Thank you!','system');
     setTimeout(()=>{
       this.state='idle';
