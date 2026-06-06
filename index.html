@@ -1,158 +1,540 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Smart Call Center | Agent Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
-        rel="stylesheet">
-    <!-- FontAwesome removed due to access restrictions -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CallFlow — AI Call Center</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0b0f1a;--bg2:#111827;--card:#1a2236;--card2:#1e293b;--text:#f1f5f9;--muted:#94a3b8;--dim:#475569;--primary:#3b82f6;--primary-glow:rgba(59,130,246,0.3);--success:#10b981;--success-glow:rgba(16,185,129,0.3);--danger:#ef4444;--warn:#f59e0b;--border:1px solid rgba(255,255,255,0.06);--radius:14px;--radius-sm:10px;--shadow:0 8px 32px rgba(0,0,0,0.4);--font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'JetBrains Mono','Cascadia Code','Fira Code',monospace}
+html{font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dvh;overflow:hidden;display:flex;flex-direction:column}
+/* Scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--dim);border-radius:4px}
+/* HEADER */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg2);border-bottom:var(--border);flex-shrink:0;z-index:10}
+.topbar .brand{display:flex;align-items:center;gap:10px}
+.topbar .brand svg{width:28px;height:28px}
+.topbar .brand h1{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--primary),#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.topbar .status{display:flex;align-items:center;gap:6px;font-size:0.75rem;color:var(--muted)}
+.topbar .status .dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success-glow);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+/* MOBILE BOTTOM NAV */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:var(--border);padding:6px 0 env(safe-area-inset-bottom,6px) 0;z-index:100;justify-content:space-around}
+.bottom-nav button{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;font-size:0.6rem;font-family:var(--font);cursor:pointer;transition:color 0.2s;min-width:56px}
+.bottom-nav button svg{width:22px;height:22px}
+.bottom-nav button.active{color:var(--primary)}
+/* MAIN LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden}
+/* SIDEBAR (desktop) */
+.sidebar{width:220px;background:var(--bg2);border-right:var(--border);display:flex;flex-direction:column;padding:16px;flex-shrink:0}
+.sidebar nav{display:flex;flex-direction:column;gap:4px}
+.sidebar nav button{background:none;border:none;color:var(--muted);display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);font-size:0.85rem;font-family:var(--font);cursor:pointer;transition:all 0.2s;text-align:left}
+.sidebar nav button svg{width:18px;height:18px;flex-shrink:0}
+.sidebar nav button:hover{background:rgba(255,255,255,0.04);color:var(--text)}
+.sidebar nav button.active{background:rgba(59,130,246,0.12);color:var(--primary)}
+.sidebar .agent-info{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--radius-sm);background:rgba(255,255,255,0.03)}
+.sidebar .agent-info .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;flex-shrink:0}
+.sidebar .agent-info .info{font-size:0.75rem}
+.sidebar .agent-info .info .name{color:var(--text);font-weight:600}
+.sidebar .agent-info .info .role{color:var(--muted)}
+/* CONTENT */
+.content{flex:1;display:flex;flex-direction:column;padding:16px;gap:16px;overflow-y:auto}
+/* Dashboard Grid */
+.dashboard{display:grid;grid-template-columns:1.2fr 1.6fr 1.2fr;gap:16px;flex:1;min-height:0}
+.card{background:var(--card);border-radius:var(--radius);border:var(--border);padding:16px;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:var(--border)}
+.card-header h3{font-size:0.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
+/* CALL PANEL */
+.call-panel{align-items:center;text-align:center}
+.call-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;border-radius:var(--radius-sm);background:rgba(0,0,0,0.25);padding:16px;transition:all 0.3s}
+.call-screen.idle{opacity:0.45}
+.call-screen .call-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:12px;box-shadow:0 0 30px rgba(59,130,246,0.2)}
+.call-screen .call-avatar.active{box-shadow:0 0 40px var(--success-glow);animation:avatar-pulse 1.5s infinite}
+@keyframes avatar-pulse{0%,100%{box-shadow:0 0 30px var(--success-glow)}50%{box-shadow:0 0 60px var(--success-glow)}}
+.call-screen #caller-id{font-size:1rem;font-weight:600;margin-bottom:2px}
+.call-screen #timer{font-family:var(--mono);font-size:2.5rem;font-weight:700;margin:4px 0;letter-spacing:2px}
+.call-screen #call-status{font-size:0.8rem;color:var(--muted)}
+/* Waveform */
+.waveform{display:flex;align-items:center;gap:3px;height:24px;margin-top:8px}
+.waveform.hidden{display:none}
+.waveform .bar{width:4px;background:var(--primary);border-radius:2px;animation:wave 0.8s infinite ease-in-out}
+.waveform .bar:nth-child(2){animation-delay:0.1s;height:8px}
+.waveform .bar:nth-child(3){animation-delay:0.2s}
+.waveform .bar:nth-child(4){animation-delay:0.3s}
+.waveform .bar:nth-child(5){animation-delay:0.4s}
+.waveform .bar:nth-child(6){animation-delay:0.5s}
+@keyframes wave{0%,100%{height:4px}50%{height:20px}}
+/* Call controls */
+.call-controls{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:12px}
+.call-controls .row{display:flex;gap:8px}
+.btn{flex:1;padding:10px 16px;border-radius:var(--radius-sm);border:none;font-size:0.85rem;font-weight:600;font-family:var(--font);cursor:pointer;transition:all 0.2s;touch-action:manipulation;min-height:44px}
+.btn:active{transform:scale(0.97)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:#2563eb;box-shadow:0 0 20px var(--primary-glow)}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{box-shadow:0 0 20px var(--success-glow)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#dc2626}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.1)}
+.btn-outline:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+/* TRANSCRIPT */
+.transcript-card{overflow:hidden}
+.transcript-box{flex:1;overflow-y:auto;padding:12px;background:rgba(0,0,0,0.2);border-radius:var(--radius-sm);font-size:0.85rem;display:flex;flex-direction:column;gap:8px;min-height:0}
+.msg{padding:8px 12px;border-radius:var(--radius-sm);line-height:1.4;max-width:92%;animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg.system{color:var(--dim);font-style:italic;text-align:center;max-width:100%;font-size:0.75rem}
+.msg.agent{background:rgba(59,130,246,0.12);border-left:3px solid var(--primary);align-self:flex-end;color:var(--text)}
+.msg.customer{background:rgba(16,185,129,0.1);border-left:3px solid var(--success);align-self:flex-start;color:var(--text)}
+.msg .time{font-size:0.6rem;color:var(--dim);margin-top:4px;display:block}
+/* RIGHT PANEL */
+.right-panel{display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+/* Department badges */
+.dept-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.dept-item{padding:8px 6px;text-align:center;border-radius:var(--radius-sm);font-size:0.72rem;font-weight:500;background:rgba(255,255,255,0.03);color:var(--muted);border:1px solid transparent;transition:all 0.3s;cursor:default}
+.dept-item.active{background:rgba(59,130,246,0.15);color:var(--primary);border-color:var(--primary);box-shadow:0 0 16px rgba(59,130,246,0.1)}
+/* Mood */
+.mood-display{text-align:center;padding:8px}
+.mood-display .mood-icon{font-size:2rem;margin-bottom:4px}
+.mood-display .mood-label{font-size:1.1rem;font-weight:700}
+.mood-bar{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;margin-top:10px;overflow:hidden}
+.mood-bar-fill{height:100%;border-radius:3px;transition:width 0.6s,background 0.4s}
+.intent-box{background:rgba(0,0,0,0.2);border-radius:var(--radius-sm);padding:10px;margin-top:8px}
+.intent-box h4{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);margin-bottom:4px}
+.intent-box p{font-size:0.85rem;color:var(--text)}
+/* Activity log */
+.log-list{list-style:none;font-size:0.75rem;color:var(--muted);overflow-y:auto;flex:1;min-height:0}
+.log-list li{padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between}
+.log-list li .time{color:var(--dim);font-size:0.6rem;font-family:var(--mono)}
+/* INCOMING CALL MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.3s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-box{background:var(--card);border-radius:20px;padding:32px;text-align:center;border:1px solid rgba(16,185,129,0.2);box-shadow:0 0 60px rgba(16,185,129,0.1);max-width:340px;width:90vw;animation:modalIn 0.3s ease}
+@keyframes modalIn{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
+.ring-container{width:80px;height:80px;margin:0 auto 16px;position:relative}
+.ring-container .ring{position:absolute;inset:0;border-radius:50%;border:3px solid var(--success);animation:ringing 1.2s infinite}
+.ring-container .ring:nth-child(2){animation-delay:0.4s}
+.ring-container .ring:nth-child(3){animation-delay:0.8s}
+@keyframes ringing{0%{transform:scale(1);opacity:1}100%{transform:scale(1.6);opacity:0}}
+.modal-box h2{font-size:1.2rem;margin-bottom:4px}
+.modal-box p{color:var(--muted);font-size:0.85rem;margin-bottom:20px}
+.modal-box .actions{display:flex;gap:12px}
+.modal-box .actions .btn{flex:1;padding:14px;font-size:1rem}
+/* RESPONSIVE */
+@media(max-width:900px){
+.dashboard{grid-template-columns:1fr;gap:12px}
+.dashboard .right-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sidebar{display:none}
+.bottom-nav{display:flex}
+.content{padding:12px;padding-bottom:64px}
+}
+@media(max-width:600px){
+.topbar{padding:10px 12px}
+.topbar .brand h1{font-size:0.95rem}
+.content{padding:8px;padding-bottom:60px;gap:10px}
+.dashboard{gap:10px}
+.dashboard .right-panel{grid-template-columns:1fr}
+.card{padding:12px}
+.call-screen .call-avatar{width:56px;height:56px;font-size:1.5rem}
+.call-screen #timer{font-size:2rem}
+.btn{font-size:0.8rem;padding:8px 12px;min-height:40px}
+.transcript-box{font-size:0.8rem;padding:8px}
+}
+@media(max-width:400px){
+.topbar .status .text{display:none}
+}
+</style>
 </head>
-
 <body>
-    <div class="app-container">
-        <!-- Sidebar / Navigation -->
-        <aside class="sidebar">
-            <div class="logo">
-                <h2>AI Connect</h2>
-                <span class="status-dot online"></span>
-            </div>
-            <nav>
-                <ul>
-                    <li class="active">Dashboard</li>
-                    <li>Call Logs</li>
-                    <li>Analytics</li>
-                    <li>Settings</li>
-                </ul>
-            </nav>
-            <div class="agent-profile">
-                <div class="avatar">DA</div>
-                <div class="info">
-                    <p>Digital Agent</p>
-                    <small>System Online</small>
-                </div>
-            </div>
-        </aside>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <header>
-                <h1>Live Operations Center</h1>
-                <div class="system-status">
-                    <span class="badge">System: Operational</span>
-                    <span class="badge">Voice Gateway: Active</span>
-                </div>
-            </header>
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary)"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    <h1>CallFlow</h1>
+  </div>
+  <div class="status">
+    <span class="dot"></span>
+    <span class="text">All Systems Operational</span>
+  </div>
+</header>
 
-            <div class="dashboard-grid">
-                <!-- Left Panel: Active Call & Routing -->
-                <div class="card active-call-card">
-                    <div class="card-header">
-                        <h3>Active Line</h3>
-                        <div class="live-indicator">LIVE</div>
-                    </div>
-
-                    <div id="call-status-screen" class="call-screen idle">
-                        <div class="caller-avatar-large">
-                            <!-- Helper for offline usage -->
-                            <span>👤</span>
-                        </div>
-                        <h2 id="caller-id">No Active Call</h2>
-                        <h1 id="timer">00:00</h1>
-                        <p id="call-status-text">Waiting for incoming connection...</p>
-
-                        <!-- Visual Waveform for Voice Activity -->
-                        <div class="waveform-container hidden" id="waveform">
-                            <div class="bar"></div>
-                            <div class="bar"></div>
-                            <div class="bar"></div>
-                            <div class="bar"></div>
-                            <div class="bar"></div>
-                            <div class="bar"></div>
-                        </div>
-                    </div>
-
-                    <div class="control-actions">
-                        <button id="btn-simulate" class="btn primary">Simulate Incoming Call</button>
-                        <div id="active-controls" class="hidden">
-                            <button id="btn-mute" class="btn secondary">Mute</button>
-                            <button id="btn-hangup" class="btn danger">End Call</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Center Panel: Live Transcript -->
-                <div class="card transcript-card">
-                    <div class="card-header">
-                        <h3>Real-time Transcript</h3>
-                        <span class="badge transcription-status">Listening...</span>
-                    </div>
-                    <div id="transcript-box" class="transcript-box">
-                        <div class="message system">System ready. Waiting for call...</div>
-                    </div>
-                </div>
-
-                <!-- Right Panel: AI Analysis (Department & Mood) -->
-                <div class="right-panel">
-                    <!-- Department Routing -->
-                    <div class="card department-card">
-                        <h3>Active Agent / Department</h3>
-                        <div class="departments-grid">
-                            <div class="dept-badge active" id="dept-reception">Reception</div>
-                            <div class="dept-badge" id="dept-sales">Sales</div>
-                            <div class="dept-badge" id="dept-marketing">Marketing</div>
-                            <div class="dept-badge" id="dept-refunds">Refunds</div>
-                            <div class="dept-badge" id="dept-inventory">Inventory</div>
-                        </div>
-                    </div>
-
-                    <!-- Sentiment Analysis -->
-                    <div class="card sentiment-card">
-                        <h3>Customer Mood</h3>
-                        <div class="mood-meter">
-                            <div class="mood-label" id="mood-text">Neutral</div>
-                            <div class="mood-bar-bg">
-                                <div class="mood-bar-fill" id="mood-bar" style="width: 50%;"></div>
-                            </div>
-                        </div>
-                        <div class="intent-box">
-                            <h4>Detected Intent</h4>
-                            <p id="intent-text">--</p>
-                        </div>
-                    </div>
-
-                    <!-- Quick Logs -->
-                    <div class="card logs-card">
-                        <h3>Recent Activity</h3>
-                        <ul id="activity-log" class="log-list">
-                            <!-- Logs will be injected here -->
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </main>
+<!-- MAIN LAYOUT -->
+<div class="layout">
+  <!-- SIDEBAR (desktop) -->
+  <aside class="sidebar">
+    <nav>
+      <button class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Analytics
+      </button>
+      <button>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Call Logs
+      </button>
+      <button>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+    </nav>
+    <div class="agent-info">
+      <div class="avatar">DA</div>
+      <div class="info">
+        <div class="name">Digital Agent</div>
+        <div class="role">AI Operator</div>
+      </div>
     </div>
+  </aside>
 
-    <!-- Incoming Call Modal -->
-    <div id="incoming-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="incoming-ring">
-                <div class="ring-circle"></div>
-                <div class="ring-circle"></div>
-            </div>
-            <h2>Incoming Call...</h2>
-            <p>Customer: +92 300 1234567</p>
-            <div class="modal-actions">
-                <button id="btn-accept" class="btn success-lg">Answer</button>
-                <button id="btn-decline" class="btn danger-lg">Decline</button>
-            </div>
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="dashboard" id="dashboardView">
+      <!-- LEFT: Call Panel -->
+      <div class="card call-panel">
+        <div class="card-header"><h3>Active Line</h3><span id="liveBadge" class="dept-item" style="font-size:0.6rem;padding:3px 8px;background:rgba(239,68,68,0.15);color:var(--danger);border:none">STANDBY</span></div>
+        <div class="call-screen idle" id="callScreen">
+          <div class="call-avatar" id="callAvatar">📞</div>
+          <div id="caller-id">No Active Call</div>
+          <div id="timer">00:00</div>
+          <div id="call-status">Waiting for incoming connection...</div>
+          <div class="waveform hidden" id="waveform">
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          </div>
         </div>
+        <div class="call-controls">
+          <button class="btn btn-primary" id="btnSimulate">Simulate Incoming Call</button>
+          <div class="row" id="activeControls" style="display:none">
+            <button class="btn btn-outline" id="btnMute">🔇 Mute</button>
+            <button class="btn btn-danger" id="btnHangup">✕ End Call</button>
+          </div>
+          <button class="btn btn-outline" id="btnDiag" style="font-size:0.75rem">🛠 Audio Diagnostics</button>
+        </div>
+      </div>
+
+      <!-- CENTER: Transcript -->
+      <div class="card transcript-card">
+        <div class="card-header"><h3>Live Transcript</h3><span class="dept-item" id="transcriptStatus" style="font-size:0.6rem;padding:3px 8px;border:none;background:rgba(255,255,255,0.04)">Idle</span></div>
+        <div class="transcript-box" id="transcriptBox">
+          <div class="msg system">System ready. Press <strong>Simulate Incoming Call</strong> to start.</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Info Panel -->
+      <div class="right-panel">
+        <!-- Department -->
+        <div class="card">
+          <div class="card-header"><h3>Department Routing</h3></div>
+          <div class="dept-grid">
+            <div class="dept-item active" id="dept-reception">Reception</div>
+            <div class="dept-item" id="dept-sales">Sales</div>
+            <div class="dept-item" id="dept-marketing">Marketing</div>
+            <div class="dept-item" id="dept-refunds">Support</div>
+            <div class="dept-item" id="dept-inventory">Inventory</div>
+          </div>
+        </div>
+        <!-- Mood -->
+        <div class="card">
+          <div class="card-header"><h3>Customer Mood</h3></div>
+          <div class="mood-display">
+            <div class="mood-icon" id="moodIcon">😐</div>
+            <div class="mood-label" id="moodText">Neutral</div>
+            <div class="mood-bar"><div class="mood-bar-fill" id="moodBar" style="width:50%;background:var(--warn)"></div></div>
+          </div>
+          <div class="intent-box">
+            <h4>Detected Intent</h4>
+            <p id="intentText">—</p>
+          </div>
+        </div>
+        <!-- Activity -->
+        <div class="card" style="flex:1;min-height:0">
+          <div class="card-header"><h3>Activity</h3></div>
+          <ul class="log-list" id="activityLog"><li style="color:var(--dim);font-style:italic">No recent activity</li></ul>
+        </div>
+      </div>
     </div>
+  </div>
+</div>
 
-    <script src="script.js"></script>
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav">
+  <button class="active" data-view="dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </button>
+  <button data-view="analytics">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Analytics
+  </button>
+  <button data-view="logs">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Logs
+  </button>
+  <button data-view="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </button>
+</nav>
+
+<!-- INCOMING CALL MODAL -->
+<div class="modal-overlay" id="incomingModal">
+  <div class="modal-box">
+    <div class="ring-container">
+      <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    </div>
+    <h2>Incoming Call</h2>
+    <p>Customer: <strong>+92 300 1234567</strong></p>
+    <div class="actions">
+      <button class="btn btn-success" id="btnAccept">Answer</button>
+      <button class="btn btn-danger" id="btnDecline">Decline</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// === STATE ===
+let isCallActive = false;
+let callStartTime = null;
+let timerInterval = null;
+let currentAgent = 'reception';
+let recognition = null;
+const synth = window.speechSynthesis;
+
+const AGENTS = {
+  reception:{name:"Jessica (Reception)",greeting:"Hello, thank you for calling CallFlow. How can I direct your call today?",rate:1.0,pitch:1.0,keywords:[]},
+  sales:{name:"David (Sales)",greeting:"Hi there! Welcome to Sales. Looking for our latest collection?",rate:1.1,pitch:1.0,keywords:['buy','price','cost','offer','discount','sale','shirt','pant']},
+  marketing:{name:"Sarah (Marketing)",greeting:"Hello! Marketing here. How can we help promote your brand?",rate:1.0,pitch:1.2,keywords:['ad','promotion','campaign','brand']},
+  refunds:{name:"Michael (Support)",greeting:"I apologize for any inconvenience. I'm here to help with your return or refund.",rate:0.9,pitch:0.9,keywords:['return','refund','money','back','broken','damage','wrong']},
+  inventory:{name:"Rob (Stock)",greeting:"Inventory control. Please state the item code you're checking.",rate:1.0,pitch:0.8,keywords:['stock','available','inventory','quantity','size']}
+};
+
+// === DOM REFS ===
+const $=(id,el=document)=>el.getElementById(id);
+const btnSimulate=$('btnSimulate'), btnAccept=$('btnAccept'), btnDecline=$('btnDecline');
+const btnHangup=$('btnHangup'), btnMute=$('btnMute'), btnDiag=$('btnDiag');
+const modal=$('incomingModal'), activeControls=$('activeControls');
+const callScreen=$('callScreen'), callerId=$('caller-id'), timerEl=$('timer');
+const callStatus=$('call-status'), waveform=$('waveform'), liveBadge=$('liveBadge');
+const transcriptBox=$('transcriptBox'), transcriptStatus=$('transcriptStatus');
+const moodIcon=$('moodIcon'), moodText=$('moodText'), moodBar=$('moodBar');
+const intentText=$('intentText'), activityLog=$('activityLog'), callAvatar=$('callAvatar');
+
+// === INIT ===
+let isMuted=false;
+
+function init(){
+  if(!('webkitSpeechRecognition' in window)){
+    addLog("⚠ Web Speech API not supported. Use Chrome/Edge.",'system');
+  } else {
+    setupSpeechRecognition();
+  }
+  btnSimulate.addEventListener('click',startIncomingCall);
+  btnAccept.addEventListener('click',acceptCall);
+  btnDecline.addEventListener('click',endCall);
+  btnHangup.addEventListener('click',endCall);
+  btnMute.addEventListener('click',toggleMute);
+  btnDiag.addEventListener('click',runDiagnostics);
+  // Bottom nav
+  document.querySelectorAll('.bottom-nav button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.bottom-nav button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+    });
+  });
+}
+
+// === SPEECH RECOGNITION ===
+function setupSpeechRecognition(){
+  recognition=new webkitSpeechRecognition();
+  recognition.continuous=true;
+  recognition.interimResults=false;
+  recognition.lang='en-US';
+  recognition.onstart=()=>{
+    waveform.classList.remove('hidden');
+    transcriptStatus.textContent='Listening...';
+    transcriptStatus.style.color='var(--success)';
+  };
+  recognition.onend=()=>{
+    waveform.classList.add('hidden');
+    if(isCallActive) setTimeout(()=>{if(isCallActive) try{recognition.start()}catch(e){}},800);
+  };
+  recognition.onerror=(e)=>{
+    if(e.error==='not-allowed'){
+      addLog("❌ Microphone blocked. Allow mic access in browser settings.",'system');
+    } else if(e.error!=='no-speech'){
+      addLog("❌ Mic error: "+e.error,'system');
+    }
+  };
+  recognition.onresult=(e)=>{
+    const t=e.results[e.results.length-1][0].transcript.trim();
+    if(!t) return;
+    addLog(t,'customer');
+    processUserSpeech(t.toLowerCase());
+  };
+}
+
+// === CALL LOGIC ===
+function startIncomingCall(){modal.classList.add('open')}
+
+function acceptCall(){
+  isCallActive=true;
+  modal.classList.remove('open');
+  btnSimulate.style.display='none';
+  activeControls.style.display='flex';
+  callScreen.classList.remove('idle');
+  callStatus.textContent='Connected';
+  callStatus.style.color='var(--success)';
+  callerId.textContent='Customer: +92 300 1234567';
+  callAvatar.textContent='👤';
+  callAvatar.classList.add('active');
+  liveBadge.textContent='LIVE';
+  liveBadge.style.cssText='font-size:0.6rem;padding:3px 8px;background:rgba(16,185,129,0.15);color:var(--success);border:none;animation:pulse 2s infinite';
+  callStartTime=Date.now();
+  timerInterval=setInterval(()=>{
+    const d=Math.floor((Date.now()-callStartTime)/1000);
+    timerEl.textContent=`${String(Math.floor(d/60)).padStart(2,'0')}:${String(d%60).padStart(2,'0')}`;
+  },1000);
+  switchDepartment('reception');
+  addLog("Call connected. Duration: 00:00",'system');
+  if(synth.speaking)synth.cancel();
+  speak(AGENTS.reception.greeting);
+  try{recognition.start()}catch(e){}
+}
+
+function endCall(){
+  isCallActive=false;
+  clearInterval(timerInterval);
+  try{recognition&&recognition.stop()}catch(e){}
+  synth.cancel();
+  modal.classList.remove('open');
+  activeControls.style.display='none';
+  btnSimulate.style.display='block';
+  callScreen.classList.add('idle');
+  callStatus.textContent='Call Ended';
+  callStatus.style.color='var(--muted)';
+  callerId.textContent='No Active Call';
+  timerEl.textContent='00:00';
+  callAvatar.textContent='📞';
+  callAvatar.classList.remove('active');
+  liveBadge.textContent='STANDBY';
+  liveBadge.style.cssText='font-size:0.6rem;padding:3px 8px;background:rgba(239,68,68,0.15);color:var(--danger);border:none;animation:none';
+  waveform.classList.add('hidden');
+  transcriptStatus.textContent='Idle';
+  transcriptStatus.style.color='';
+  addLog("Call disconnected.",'system');
+}
+
+function toggleMute(){
+  isMuted=!isMuted;
+  btnMute.textContent=isMuted?'🔊 Unmute':'🔇 Mute';
+  addLog(isMuted?"Agent muted":"Agent unmuted",'system');
+}
+
+// === SPEECH PROCESSING ===
+function processUserSpeech(text){
+  analyzeSentiment(text);
+  const target=detectIntent(text);
+  setTimeout(()=>{
+    if(target&&target!==currentAgent){
+      speak(`Please hold while I transfer you to the ${target} department.`);
+      addLog(`Transferring to ${target}...`,'system');
+      setTimeout(()=>{
+        switchDepartment(target);
+        speak(AGENTS[target].greeting);
+      },2500);
+    } else {
+      generateResponse(text);
+    }
+  },800);
+}
+
+function detectIntent(text){
+  for(const[dept,data]of Object.entries(AGENTS)){
+    if(dept==='reception') continue;
+    if(data.keywords.some(k=>text.includes(k))) return dept;
+  }
+  return null;
+}
+
+function generateResponse(text){
+  const responses={
+    reception:"I understand. Could you clarify if this is regarding sales, a return, or stock inquiry?",
+    sales:"That sounds great! Would you like to place an order or know more about our products?",
+    refunds:"I've noted your concern. Please share your Order ID so I can process this quickly.",
+    marketing:"Thank you. Let me check our ongoing campaigns for you.",
+    inventory:"Let me look up the stock details in our system."
+  };
+  speak(responses[currentAgent]||"Thank you. Let me check on that for you.");
+}
+
+function speak(text){
+  if(isMuted) return;
+  if(synth.speaking)synth.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  const a=AGENTS[currentAgent];
+  u.rate=a.rate;u.pitch=a.pitch;
+  addLog(text,'agent');
+  synth.speak(u);
+}
+
+// === ROUTING ===
+function switchDepartment(dept){
+  currentAgent=dept;
+  document.querySelectorAll('.dept-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('dept-'+dept).classList.add('active');
+  intentText.textContent='Routed to: '+dept.charAt(0).toUpperCase()+dept.slice(1);
+}
+
+// === SENTIMENT ===
+function analyzeSentiment(text){
+  const neg=['angry','bad','slow','stupid','wrong','late','hate','terrible','frustrated','annoyed'];
+  const pos=['good','great','thanks','happy','fast','love','excellent','amazing','perfect','wonderful'];
+  let score=50,label='Neutral',icon='😐',color='var(--warn)';
+  if(neg.some(w=>text.includes(w))){score=15;label='Frustrated';icon='😠';color='var(--danger)';}
+  else if(pos.some(w=>text.includes(w))){score=85;label='Happy';icon='😊';color='var(--success)';}
+  moodIcon.textContent=icon;
+  moodText.textContent=label;
+  moodBar.style.width=score+'%';
+  moodBar.style.background=color;
+}
+
+// === LOGGING ===
+function addLog(message,type){
+  const t=new Date();
+  const time=`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+  const d=document.createElement('div');
+  d.className='msg '+type;
+  d.innerHTML=message+(type!=='system'?`<span class="time">${time}</span>`:'');
+  transcriptBox.appendChild(d);
+  transcriptBox.scrollTop=transcriptBox.scrollHeight;
+  if(type!=='system'){
+    const li=document.createElement('li');
+    li.innerHTML=`<span><strong>${type==='agent'?'AI':'User'}:</strong> ${message.substring(0,24)}...</span><span class="time">${time}</span>`;
+    activityLog.prepend(li);
+    if(activityLog.children[0].textContent==='No recent activity') activityLog.innerHTML='';
+    if(activityLog.children.length>20) activityLog.removeChild(activityLog.lastChild);
+  }
+}
+
+// === DIAGNOSTICS ===
+function runDiagnostics(){
+  addLog("── Diagnostics ──",'system');
+  if('speechSynthesis' in window){addLog("✔ Text-to-Speech: Available",'system');
+    try{synth.speak(new SpeechSynthesisUtterance("Test"));}catch(e){addLog("❌ TTS failed: "+e.message,'system');}
+  } else addLog("❌ Text-to-Speech: Unavailable",'system');
+  if('webkitSpeechRecognition' in window){addLog("✔ Speech Recognition: Available",'system');
+    try{recognition.start();addLog("✔ Mic test: Speak now (auto-stops in 5s)",'system');setTimeout(()=>{try{recognition.stop()}catch(e){}},5000);}catch(e){addLog("❌ Mic failed: "+e.message,'system');}
+  } else addLog("❌ Speech Recognition: Unavailable",'system');
+}
+
+init();
+</script>
 </body>
-
 </html>
