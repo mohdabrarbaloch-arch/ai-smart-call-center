@@ -125,6 +125,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
 .call-header .call-meta{text-align:left;width:100%;display:flex;justify-content:space-between}
 .topbar{padding:10px 14px}
 }
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 @media(max-width:480px){
 .content{padding:12px}
 .welcome-screen .hero-icon{width:56px;height:56px;font-size:1.5rem}
@@ -192,7 +193,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
       <div class="otp-screen">
         <h2>Verify Your Number</h2>
         <p class="phone-display">Code sent to <strong id="otpPhoneDisplay">+92 300 1234567</strong></p>
-        <div class="otp-note" id="otpNote">📌 For demo, use code: <strong id="otpCodeDisplay">123456</strong></div>
+        <div class="otp-note">📌 <span id="otpNoteText">For demo, use code</span>: <strong id="otpCodeDisplay">123456</strong></div>
         <div class="otp-inputs" id="otpInputs">
           <input type="text" maxlength="1" inputmode="numeric" data-index="0">
           <input type="text" maxlength="1" inputmode="numeric" data-index="1">
@@ -570,10 +571,12 @@ class CallFlowEngine {
     this.$('welcomeText').textContent = t.welcomeText;
     this.phoneInput.placeholder = t.phonePlaceholder;
     this.btnSendOTP.textContent = t.sendOTP;
-    this.$('verifyTitle') && (this.$('verifyTitle').textContent = t.verifyTitle);
+    const vt = this.$('verifyTitle');
+    if (vt) vt.textContent = t.verifyTitle;
     this.btnVerify.textContent = t.verifyBtn;
-    const note = this.$('otpNote');
-    if (note) note.innerHTML = `📌 ${t.otpNote} <strong id="otpCodeDisplay">${this.otp}</strong>`;
+    const nt = this.$('otpNoteText');
+    if (nt) nt.textContent = t.otpNote;
+    this.$('otpCodeDisplay').textContent = this.otp;
     this.btnMute.textContent = this.isMuted ? (this.lang === 'ur' ? '🔊 آواز آن' : '🔊 Unmute') : (this.lang === 'ur' ? '🔇 خاموش' : '🔇 Mute');
     this.btnTransfer.textContent = t.transfer;
     this.btnEndCall.textContent = t.endCall;
@@ -601,6 +604,26 @@ class CallFlowEngine {
     this.btnVerify.disabled = true;
     this.otpInputs[0].focus();
     this.state = 'otp';
+    this.showSmsToast(this.phone, this.otp);
+  }
+
+  showSmsToast(phone, code) {
+    const toast = document.createElement('div');
+    toast.id = 'smsToast';
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a2640;border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:14px 20px;max-width:360px;width:90vw;z-index:300;box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:toastIn 0.3s ease;font-size:0.85rem';
+    toast.innerHTML = `
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="width:32px;height:32px;border-radius:50%;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1rem">📨</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;color:var(--success);margin-bottom:2px;font-size:0.8rem">SMS Sent</div>
+          <div style="color:var(--muted);font-size:0.75rem;line-height:1.4">Verification code sent to <strong style="color:var(--text)">${phone}</strong></div>
+          <div style="margin-top:6px;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:8px;text-align:center;font-family:var(--mono);font-size:1.2rem;font-weight:700;letter-spacing:6px;color:var(--success)">${code}</div>
+          <div style="margin-top:6px;font-size:0.65rem;color:var(--dim);text-align:center">🔴 For demo purposes only</div>
+        </div>
+        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:1.1rem;padding:4px">✕</button>
+      </div>`;
+    document.body.appendChild(toast);
+    setTimeout(() => { const t = document.getElementById('smsToast'); if (t) t.remove(); }, 15000);
   }
 
   checkOTP() {
