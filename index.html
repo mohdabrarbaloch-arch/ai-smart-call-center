@@ -536,12 +536,8 @@ class CallFlowEngine {
     this.btnEndCall.addEventListener('click',()=>this.endCall());
     this.btnTransfer.addEventListener('click',()=>this.showTransferMenu());
 
-    // Push to talk
-    this.btnTalk.addEventListener('mousedown',e=>{e.preventDefault();this.startPushToTalk();});
-    this.btnTalk.addEventListener('mouseup',e=>{e.preventDefault();this.stopPushToTalk();});
-    this.btnTalk.addEventListener('mouseleave',e=>{if(this.pushToTalkMode)this.stopPushToTalk();});
-    this.btnTalk.addEventListener('touchstart',e=>{e.preventDefault();this.startPushToTalk();});
-    this.btnTalk.addEventListener('touchend',e=>{e.preventDefault();this.stopPushToTalk();});
+    // Talk button - click toggle (works on desktop + mobile)
+    this.btnTalk.addEventListener('click',e=>this.toggleTalk());
 
     this.langButtons.forEach(btn=>{
       btn.addEventListener('click',()=>{
@@ -650,77 +646,75 @@ class CallFlowEngine {
     const a=this.agentsMap.reception;
     setTimeout(()=>{this.isFirstInteraction=true;a.handle(this,'',this.lang);},800);
     this.updateAgentIndicators();
-    // Start mic for push-to-talk mode
-    this.setupContinuousMic();
+    // Mic ready for toggle-talk
+    this.stopListening();
   }
 
-  // ---- PUSH TO TALK ----
-  setupContinuousMic(){
-    if(!this.recognition||!('webkitSpeechRecognition' in window)) return;
-    this.pttRecog=new webkitSpeechRecognition();
-    this.pttRecog.continuous=true;
-    this.pttRecog.interimResults=false;
-    this.pttRecog.lang='en-US';
-    this.pttRecog.onresult=(e)=>{
-      if(!this.pushToTalkMode) return;
-      for(let i=e.resultIndex;i<e.results.length;i++){
-        const r=e.results[i];
-        if(r.isFinal){
-          const t=r[0].transcript.trim();
-          if(t){
-            this.addMessage(t,'user');
-            this.handleUserInput(t);
-          }
-        }
-      }
-    };
-    this.pttRecog.onend=()=>{
-      if(this.pushToTalkMode){
-        try{this.pttRecog.start();}catch(e){}
-      } else {
-        this.setMicStatus('ready');
-      }
-    };
-    this.pttRecog.onerror=(e)=>{
-      if(e.error!=='no-speech'&&e.error!=='aborted'){
-        this.pushToTalkMode=false;
-        this.btnTalk.textContent=I18N[this.lang].pressTalk;
-        this.btnTalk.style.background='';
-        this.setMicStatus('ready');
-      }
-    };
-    this.setMicStatus('ready');
+  // ---- TOGGLE TALK (click to start, click to stop) ----
+  initSpeech(){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){
+      this.addMessage('⚠ Speech recognition requires Chrome/Edge browser.','system');
+      this.btnTalk.disabled=true;
+      return;
+    }
+    this.SpeechRecognition=SR;
   }
 
-  startPushToTalk(){
-    if(!this.pttRecog||this.isMuted||this.isSpeaking) return;
+  toggleTalk(){
+    if(!this.SpeechRecognition||this.isMuted||this.isSpeaking) return;
+    if(this.pushToTalkMode){
+      this.stopListening();
+    } else {
+      this.startListening();
+    }
+  }
+
+  startListening(){
+    if(this.pushToTalkMode) return;
     this.pushToTalkMode=true;
     this.btnTalk.textContent=I18N[this.lang].releaseTalk;
     this.btnTalk.style.background='linear-gradient(135deg,var(--danger),#dc2626)';
-    this.setMicStatus('listening');
-    try{this.pttRecog.start();}catch(e){}
+    this.micDot.className='mic-dot active';
+    this.micLabel.textContent=I18N[this.lang].micListening;
+    const recog=new this.SpeechRecognition();
+    recog.continuous=false;
+    recog.interimResults=false;
+    recog.lang='en-US';
+    recog.onresult=(e)=>{
+      const t=e.results[0][0].transcript.trim();
+      if(t){
+        this.addMessage(t,'user');
+        this.handleUserInput(t);
+      }
+      this.stopListening();
+    };
+    recog.onend=()=>{
+      if(this.pushToTalkMode) this.stopListening();
+    };
+    recog.onerror=(e)=>{
+      if(e.error!=='no-speech'&&e.error!=='aborted'){
+        this.addMessage(`⚠ Mic error: ${e.error}. Please try again.`,'system');
+      }
+      this.stopListening();
+    };
+    try {
+      recog.start();
+      this._currentRecog=recog;
+    } catch(e){
+      this.stopListening();
+    }
   }
 
-  stopPushToTalk(){
-    if(!this.pushToTalkMode) return;
+  stopListening(){
     this.pushToTalkMode=false;
     this.btnTalk.textContent=I18N[this.lang].pressTalk;
     this.btnTalk.style.background='';
-    this.setMicStatus('ready');
-    try{this.pttRecog.stop();}catch(e){}
-  }
-
-  setMicStatus(status){
     this.micDot.className='mic-dot';
-    const t=I18N[this.lang]||I18N.en;
-    if(status==='listening'){
-      this.micDot.classList.add('active');
-      this.micLabel.textContent=t.micListening;
-    } else if(status==='speaking'){
-      this.micDot.classList.add('speaking');
-      this.micLabel.textContent='Agent speaking...';
-    } else {
-      this.micLabel.textContent=t.micReady;
+    this.micLabel.textContent=I18N[this.lang].micReady;
+    if(this._currentRecog){
+      try{this._currentRecog.stop()}catch(e){}
+      this._currentRecog=null;
     }
   }
 
@@ -846,7 +840,7 @@ class CallFlowEngine {
     this.state='ended';
     clearInterval(this.timerInterval);
     if(this.synth.speaking) this.synth.cancel();
-    try{if(this._currentPTT) this._currentPTT.stop()}catch(e){}
+    try{if(this._currentRecog) this._currentRecog.stop()}catch(e){}
     this.callStatus.textContent='● Call Ended';
     this.callStatus.style.color='var(--dim)';
     this.btnTalk.disabled=true;
@@ -865,16 +859,6 @@ class CallFlowEngine {
     },3000);
   }
 
-  // ---- SPEECH ----
-  initSpeech(){
-    if(!('webkitSpeechRecognition' in window)){
-      this.addMessage('⚠ Speech recognition requires Chrome/Edge browser.','system');
-      this.btnTalk.disabled=true;
-      return;
-    }
-    // We use webkitSpeechRecognition — created fresh each time for push-to-talk
-    this.recognition=true; // Signal that it's supported
-  }
 }
 
 document.addEventListener('DOMContentLoaded',()=>{window.callflow=new CallFlowEngine();});
