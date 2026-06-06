@@ -656,61 +656,58 @@ class CallFlowEngine {
 
   // ---- PUSH TO TALK ----
   setupContinuousMic(){
-    if(!this.recognition) return;
-    // We don't start continuous - we use push to talk
-    this.setMicStatus('ready');
-  }
-
-  startPushToTalk(){
-    if(!this.recognition||this.isMuted||this.isSpeaking) return;
-    this.pushToTalkMode=true;
-    this.btnTalk.textContent=I18N[this.lang].releaseTalk;
-    this.btnTalk.style.background='linear-gradient(135deg,var(--danger),#dc2626)';
-    this.setMicStatus('listening');
-    try{
-      // Stop any existing session first
-      this.recognition.stop();
-      setTimeout(()=>{
-        // Fresh start for each push
-        const tempRecog=new webkitSpeechRecognition();
-        tempRecog.continuous=false;
-        tempRecog.interimResults=false;
-        tempRecog.lang='en-US';
-        tempRecog.onresult=(e)=>{
-          const t=e.results[0][0].transcript.trim();
+    if(!this.recognition||!('webkitSpeechRecognition' in window)) return;
+    this.pttRecog=new webkitSpeechRecognition();
+    this.pttRecog.continuous=true;
+    this.pttRecog.interimResults=false;
+    this.pttRecog.lang='en-US';
+    this.pttRecog.onresult=(e)=>{
+      if(!this.pushToTalkMode) return;
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const r=e.results[i];
+        if(r.isFinal){
+          const t=r[0].transcript.trim();
           if(t){
             this.addMessage(t,'user');
             this.handleUserInput(t);
           }
-        };
-        tempRecog.onend=()=>{
-          this.pushToTalkMode=false;
-          this.btnTalk.textContent=I18N[this.lang].pressTalk;
-          this.btnTalk.style.background='';
-          this.setMicStatus('ready');
-        };
-        tempRecog.onerror=(e)=>{
-          console.log('PTT error:',e.error);
-          this.pushToTalkMode=false;
-          this.btnTalk.textContent=I18N[this.lang].pressTalk;
-          this.btnTalk.style.background='';
-          this.setMicStatus('ready');
-        };
-        tempRecog.start();
-        this._currentPTT=tempRecog;
-      },100);
-    }catch(e){console.log('PTT start error:',e);}
+        }
+      }
+    };
+    this.pttRecog.onend=()=>{
+      if(this.pushToTalkMode){
+        try{this.pttRecog.start();}catch(e){}
+      } else {
+        this.setMicStatus('ready');
+      }
+    };
+    this.pttRecog.onerror=(e)=>{
+      if(e.error!=='no-speech'&&e.error!=='aborted'){
+        this.pushToTalkMode=false;
+        this.btnTalk.textContent=I18N[this.lang].pressTalk;
+        this.btnTalk.style.background='';
+        this.setMicStatus('ready');
+      }
+    };
+    this.setMicStatus('ready');
+  }
+
+  startPushToTalk(){
+    if(!this.pttRecog||this.isMuted||this.isSpeaking) return;
+    this.pushToTalkMode=true;
+    this.btnTalk.textContent=I18N[this.lang].releaseTalk;
+    this.btnTalk.style.background='linear-gradient(135deg,var(--danger),#dc2626)';
+    this.setMicStatus('listening');
+    try{this.pttRecog.start();}catch(e){}
   }
 
   stopPushToTalk(){
-    // The recognition.onend handler will clean up
-    // We don't call stop here because the user might pause mid-speech
-    // Actually, we do call stop after a short delay to finalize
-    if(this._currentPTT){
-      setTimeout(()=>{
-        try{this._currentPTT.stop()}catch(e){}
-      },500);
-    }
+    if(!this.pushToTalkMode) return;
+    this.pushToTalkMode=false;
+    this.btnTalk.textContent=I18N[this.lang].pressTalk;
+    this.btnTalk.style.background='';
+    this.setMicStatus('ready');
+    try{this.pttRecog.stop();}catch(e){}
   }
 
   setMicStatus(status){
