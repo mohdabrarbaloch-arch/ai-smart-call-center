@@ -2,539 +2,872 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CallFlow — AI Call Center</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>CallFlow — AI Call Center Engine</title>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0b0f1a;--bg2:#111827;--card:#1a2236;--card2:#1e293b;--text:#f1f5f9;--muted:#94a3b8;--dim:#475569;--primary:#3b82f6;--primary-glow:rgba(59,130,246,0.3);--success:#10b981;--success-glow:rgba(16,185,129,0.3);--danger:#ef4444;--warn:#f59e0b;--border:1px solid rgba(255,255,255,0.06);--radius:14px;--radius-sm:10px;--shadow:0 8px 32px rgba(0,0,0,0.4);--font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'JetBrains Mono','Cascadia Code','Fira Code',monospace}
+:root{--bg:#080c16;--bg2:#0f1729;--card:#161f35;--card2:#1a2640;--text:#e8edf5;--muted:#8892a8;--dim:#4a5568;--primary:#3b82f6;--primary-glow:rgba(59,130,246,0.25);--success:#10b981;--success-glow:rgba(16,185,129,0.25);--danger:#ef4444;--warn:#f59e0b;--purple:#8b5cf6;--pink:#ec4899;--border:1px solid rgba(255,255,255,0.05);--radius:16px;--radius-sm:10px;--shadow:0 8px 40px rgba(0,0,0,0.5);--font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'JetBrains Mono','Fira Code',monospace}
 html{font-size:16px}
-body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dvh;overflow:hidden;display:flex;flex-direction:column}
-/* Scrollbar */
-::-webkit-scrollbar{width:4px}
+body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dvh;overflow:hidden;display:flex;flex-direction:column;background-image:radial-gradient(ellipse at 20% 50%,rgba(59,130,246,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(139,92,246,0.04) 0%,transparent 50%)}
+::selection{background:rgba(59,130,246,0.3)}
+::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--dim);border-radius:4px}
-/* HEADER */
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg2);border-bottom:var(--border);flex-shrink:0;z-index:10}
+::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(15,23,41,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:var(--border);flex-shrink:0;z-index:10}
 .topbar .brand{display:flex;align-items:center;gap:10px}
-.topbar .brand svg{width:28px;height:28px}
-.topbar .brand h1{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--primary),#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.topbar .status{display:flex;align-items:center;gap:6px;font-size:0.75rem;color:var(--muted)}
-.topbar .status .dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success-glow);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-/* MOBILE BOTTOM NAV */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:var(--border);padding:6px 0 env(safe-area-inset-bottom,6px) 0;z-index:100;justify-content:space-around}
-.bottom-nav button{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;font-size:0.6rem;font-family:var(--font);cursor:pointer;transition:color 0.2s;min-width:56px}
-.bottom-nav button svg{width:22px;height:22px}
-.bottom-nav button.active{color:var(--primary)}
-/* MAIN LAYOUT */
-.layout{display:flex;flex:1;overflow:hidden}
-/* SIDEBAR (desktop) */
-.sidebar{width:220px;background:var(--bg2);border-right:var(--border);display:flex;flex-direction:column;padding:16px;flex-shrink:0}
-.sidebar nav{display:flex;flex-direction:column;gap:4px}
-.sidebar nav button{background:none;border:none;color:var(--muted);display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);font-size:0.85rem;font-family:var(--font);cursor:pointer;transition:all 0.2s;text-align:left}
-.sidebar nav button svg{width:18px;height:18px;flex-shrink:0}
-.sidebar nav button:hover{background:rgba(255,255,255,0.04);color:var(--text)}
-.sidebar nav button.active{background:rgba(59,130,246,0.12);color:var(--primary)}
-.sidebar .agent-info{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--radius-sm);background:rgba(255,255,255,0.03)}
-.sidebar .agent-info .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;flex-shrink:0}
-.sidebar .agent-info .info{font-size:0.75rem}
-.sidebar .agent-info .info .name{color:var(--text);font-weight:600}
-.sidebar .agent-info .info .role{color:var(--muted)}
+.topbar .brand svg{width:26px;height:26px}
+.topbar .brand h1{font-size:1.05rem;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.topbar .brand span{font-size:0.6rem;color:var(--dim);-webkit-text-fill-color:var(--dim);margin-left:4px}
+.topbar .status{display:flex;align-items:center;gap:8px;font-size:0.7rem;color:var(--muted)}
+.topbar .status .dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success-glow);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* LANG SELECTOR */
+.lang-selector{display:flex;gap:4px;background:rgba(255,255,255,0.04);border-radius:8px;padding:3px}
+.lang-selector button{background:none;border:none;color:var(--dim);padding:4px 8px;border-radius:6px;font-size:0.6rem;font-family:var(--font);cursor:pointer;transition:all 0.2s;font-weight:500;text-transform:uppercase;letter-spacing:0.02em}
+.lang-selector button.active{background:rgba(59,130,246,0.2);color:var(--primary)}
+
+/* LAYOUT */
+.layout{flex:1;display:flex;overflow:hidden}
+.sidebar{width:200px;background:rgba(15,23,41,0.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-right:var(--border);display:flex;flex-direction:column;padding:16px;flex-shrink:0}
+.sidebar .agents-label{font-size:0.6rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--dim);margin-bottom:10px;font-weight:600}
+.sidebar .agent-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);font-size:0.78rem;color:var(--muted);margin-bottom:4px;border:1px solid transparent;transition:all 0.2s}
+.sidebar .agent-item .indicator{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sidebar .agent-item .indicator.idle{background:var(--dim)}
+.sidebar .agent-item .indicator.busy{background:var(--success);box-shadow:0 0 10px var(--success-glow)}
+.sidebar .agent-item .indicator.transfer{background:var(--warn);box-shadow:0 0 10px rgba(245,158,11,0.3);animation:pulse 0.8s infinite}
+.sidebar .agent-item.active{border-color:rgba(59,130,246,0.2);background:rgba(59,130,246,0.08)}
+.sidebar .agent-item .badge{font-size:0.5rem;padding:1px 5px;border-radius:4px;margin-left:auto}
+
 /* CONTENT */
-.content{flex:1;display:flex;flex-direction:column;padding:16px;gap:16px;overflow-y:auto}
-/* Dashboard Grid */
-.dashboard{display:grid;grid-template-columns:1.2fr 1.6fr 1.2fr;gap:16px;flex:1;min-height:0}
-.card{background:var(--card);border-radius:var(--radius);border:var(--border);padding:16px;display:flex;flex-direction:column;box-shadow:var(--shadow)}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:var(--border)}
-.card-header h3{font-size:0.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
-/* CALL PANEL */
-.call-panel{align-items:center;text-align:center}
-.call-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;border-radius:var(--radius-sm);background:rgba(0,0,0,0.25);padding:16px;transition:all 0.3s}
-.call-screen.idle{opacity:0.45}
-.call-screen .call-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:12px;box-shadow:0 0 30px rgba(59,130,246,0.2)}
-.call-screen .call-avatar.active{box-shadow:0 0 40px var(--success-glow);animation:avatar-pulse 1.5s infinite}
-@keyframes avatar-pulse{0%,100%{box-shadow:0 0 30px var(--success-glow)}50%{box-shadow:0 0 60px var(--success-glow)}}
-.call-screen #caller-id{font-size:1rem;font-weight:600;margin-bottom:2px}
-.call-screen #timer{font-family:var(--mono);font-size:2.5rem;font-weight:700;margin:4px 0;letter-spacing:2px}
-.call-screen #call-status{font-size:0.8rem;color:var(--muted)}
-/* Waveform */
-.waveform{display:flex;align-items:center;gap:3px;height:24px;margin-top:8px}
-.waveform.hidden{display:none}
-.waveform .bar{width:4px;background:var(--primary);border-radius:2px;animation:wave 0.8s infinite ease-in-out}
-.waveform .bar:nth-child(2){animation-delay:0.1s;height:8px}
-.waveform .bar:nth-child(3){animation-delay:0.2s}
-.waveform .bar:nth-child(4){animation-delay:0.3s}
-.waveform .bar:nth-child(5){animation-delay:0.4s}
-.waveform .bar:nth-child(6){animation-delay:0.5s}
-@keyframes wave{0%,100%{height:4px}50%{height:20px}}
-/* Call controls */
-.call-controls{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:12px}
-.call-controls .row{display:flex;gap:8px}
-.btn{flex:1;padding:10px 16px;border-radius:var(--radius-sm);border:none;font-size:0.85rem;font-weight:600;font-family:var(--font);cursor:pointer;transition:all 0.2s;touch-action:manipulation;min-height:44px}
+.content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+
+/* SCREENS */
+.screen{display:none;width:100%;max-width:520px;animation:fadeUp 0.4s ease}
+.screen.active{display:flex;flex-direction:column;align-items:center}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* WELCOME / PHONE SCREEN */
+.welcome-screen{text-align:center}
+.welcome-screen .hero-icon{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin-bottom:16px;box-shadow:0 0 40px var(--primary-glow)}
+.welcome-screen h2{font-size:1.4rem;font-weight:700;margin-bottom:6px}
+.welcome-screen p{color:var(--muted);font-size:0.85rem;margin-bottom:24px;max-width:360px;line-height:1.5}
+.phone-input{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px}
+.phone-input .input-group{display:flex;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);padding:4px;transition:border-color 0.2s}
+.phone-input .input-group:focus-within{border-color:rgba(59,130,246,0.3)}
+.phone-input .input-group .prefix{padding:0 12px;color:var(--muted);font-size:0.9rem;font-weight:500}
+.phone-input .input-group input{flex:1;background:none;border:none;color:var(--text);font-size:1rem;padding:12px 8px;outline:none;font-family:var(--font)}
+.phone-input .input-group input::placeholder{color:var(--dim)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:var(--radius-sm);border:none;font-size:0.9rem;font-weight:600;font-family:var(--font);cursor:pointer;transition:all 0.2s;touch-action:manipulation;min-height:46px;text-decoration:none;color:#fff}
 .btn:active{transform:scale(0.97)}
-.btn-primary{background:var(--primary);color:#fff}
-.btn-primary:hover{background:#2563eb;box-shadow:0 0 20px var(--primary-glow)}
-.btn-success{background:var(--success);color:#fff}
-.btn-success:hover{box-shadow:0 0 20px var(--success-glow)}
-.btn-danger{background:var(--danger);color:#fff}
-.btn-danger:hover{background:#dc2626}
-.btn-outline{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.1)}
-.btn-outline:hover{background:rgba(255,255,255,0.05);color:var(--text)}
-.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+.btn-primary{background:linear-gradient(135deg,var(--primary),#2563eb);color:#fff;box-shadow:0 4px 16px var(--primary-glow)}
+.btn-primary:hover{box-shadow:0 6px 24px var(--primary-glow);transform:translateY(-1px)}
+.btn-success{background:linear-gradient(135deg,var(--success),#059669);box-shadow:0 4px 16px var(--success-glow)}
+.btn-danger{background:linear-gradient(135deg,var(--danger),#dc2626);box-shadow:0 4px 16px rgba(239,68,68,0.2)}
+.btn-outline{background:rgba(255,255,255,0.06);color:var(--text);border:1px solid rgba(255,255,255,0.08)}
+.btn-outline:hover{background:rgba(255,255,255,0.1)}
+.btn-full{width:100%}
+
+/* OTP SCREEN */
+.otp-screen{text-align:center}
+.otp-screen h2{font-size:1.2rem;margin-bottom:4px}
+.otp-screen .phone-display{color:var(--muted);font-size:0.85rem;margin-bottom:16px}
+.otp-screen .otp-note{padding:10px 16px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);border-radius:var(--radius-sm);font-size:0.75rem;color:var(--warn);margin-bottom:16px;max-width:320px}
+.otp-inputs{display:flex;gap:8px;margin-bottom:16px}
+.otp-inputs input{width:48px;height:52px;text-align:center;font-size:1.3rem;font-weight:700;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);color:var(--text);outline:none;font-family:var(--mono);transition:border-color 0.2s}
+.otp-inputs input:focus{border-color:var(--primary);box-shadow:0 0 12px var(--primary-glow)}
+.otp-inputs input.filled{border-color:var(--success)}
+
+/* CALL SCREEN */
+.call-screen{width:100%;max-width:600px}
+.call-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.call-header .agent-info{display:flex;align-items:center;gap:12px}
+.call-header .agent-info .agent-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0;position:relative}
+.call-header .agent-info .agent-avatar .ring{position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--success);animation:ring-spin 3s linear infinite;opacity:0.5}
+.call-header .agent-info .agent-avatar .ring.danger{border-color:var(--danger)}
+@keyframes ring-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.call-header .agent-info .agent-details .agent-name{font-size:0.95rem;font-weight:600}
+.call-header .agent-info .agent-details .agent-role{font-size:0.7rem;color:var(--muted)}
+.call-header .call-meta{text-align:right}
+.call-header .call-meta .timer{font-family:var(--mono);font-size:1.1rem;color:var(--text)}
+.call-header .call-meta .status{font-size:0.65rem;color:var(--success)}
+
 /* TRANSCRIPT */
-.transcript-card{overflow:hidden}
-.transcript-box{flex:1;overflow-y:auto;padding:12px;background:rgba(0,0,0,0.2);border-radius:var(--radius-sm);font-size:0.85rem;display:flex;flex-direction:column;gap:8px;min-height:0}
-.msg{padding:8px 12px;border-radius:var(--radius-sm);line-height:1.4;max-width:92%;animation:fadeIn 0.3s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.msg.system{color:var(--dim);font-style:italic;text-align:center;max-width:100%;font-size:0.75rem}
-.msg.agent{background:rgba(59,130,246,0.12);border-left:3px solid var(--primary);align-self:flex-end;color:var(--text)}
-.msg.customer{background:rgba(16,185,129,0.1);border-left:3px solid var(--success);align-self:flex-start;color:var(--text)}
-.msg .time{font-size:0.6rem;color:var(--dim);margin-top:4px;display:block}
-/* RIGHT PANEL */
-.right-panel{display:flex;flex-direction:column;gap:12px;overflow-y:auto}
-/* Department badges */
-.dept-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.dept-item{padding:8px 6px;text-align:center;border-radius:var(--radius-sm);font-size:0.72rem;font-weight:500;background:rgba(255,255,255,0.03);color:var(--muted);border:1px solid transparent;transition:all 0.3s;cursor:default}
-.dept-item.active{background:rgba(59,130,246,0.15);color:var(--primary);border-color:var(--primary);box-shadow:0 0 16px rgba(59,130,246,0.1)}
-/* Mood */
-.mood-display{text-align:center;padding:8px}
-.mood-display .mood-icon{font-size:2rem;margin-bottom:4px}
-.mood-display .mood-label{font-size:1.1rem;font-weight:700}
-.mood-bar{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;margin-top:10px;overflow:hidden}
-.mood-bar-fill{height:100%;border-radius:3px;transition:width 0.6s,background 0.4s}
-.intent-box{background:rgba(0,0,0,0.2);border-radius:var(--radius-sm);padding:10px;margin-top:8px}
-.intent-box h4{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--dim);margin-bottom:4px}
-.intent-box p{font-size:0.85rem;color:var(--text)}
-/* Activity log */
-.log-list{list-style:none;font-size:0.75rem;color:var(--muted);overflow-y:auto;flex:1;min-height:0}
-.log-list li{padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between}
-.log-list li .time{color:var(--dim);font-size:0.6rem;font-family:var(--mono)}
-/* INCOMING CALL MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.3s}
-.modal-overlay.open{opacity:1;pointer-events:all}
-.modal-box{background:var(--card);border-radius:20px;padding:32px;text-align:center;border:1px solid rgba(16,185,129,0.2);box-shadow:0 0 60px rgba(16,185,129,0.1);max-width:340px;width:90vw;animation:modalIn 0.3s ease}
-@keyframes modalIn{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
-.ring-container{width:80px;height:80px;margin:0 auto 16px;position:relative}
-.ring-container .ring{position:absolute;inset:0;border-radius:50%;border:3px solid var(--success);animation:ringing 1.2s infinite}
-.ring-container .ring:nth-child(2){animation-delay:0.4s}
-.ring-container .ring:nth-child(3){animation-delay:0.8s}
-@keyframes ringing{0%{transform:scale(1);opacity:1}100%{transform:scale(1.6);opacity:0}}
-.modal-box h2{font-size:1.2rem;margin-bottom:4px}
-.modal-box p{color:var(--muted);font-size:0.85rem;margin-bottom:20px}
-.modal-box .actions{display:flex;gap:12px}
-.modal-box .actions .btn{flex:1;padding:14px;font-size:1rem}
+.transcript-container{background:rgba(0,0,0,0.25);border-radius:var(--radius);padding:16px;height:300px;overflow-y:auto;margin-bottom:12px;border:var(--border)}
+.transcript-container .msg{padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:8px;max-width:88%;animation:msgIn 0.3s ease;font-size:0.85rem;line-height:1.5}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.agent{background:rgba(59,130,246,0.1);border-left:3px solid var(--primary);align-self:flex-end;margin-left:auto}
+.msg.user{background:rgba(16,185,129,0.08);border-left:3px solid var(--success);margin-right:auto}
+.msg.system{color:var(--dim);font-style:italic;text-align:center;max-width:100%;font-size:0.7rem;background:none!important}
+.msg .time{font-size:0.55rem;color:var(--dim);margin-top:4px;display:block;opacity:0.6}
+.msg .translation{font-size:0.65rem;color:var(--muted);margin-top:2px;display:block;border-top:1px solid rgba(255,255,255,0.04);padding-top:2px}
+
+/* CALL CONTROLS */
+.call-footer{display:flex;gap:8px;flex-wrap:wrap}
+.call-footer .btn{flex:1;min-width:80px}
+.call-footer .btn.end{background:linear-gradient(135deg,var(--danger),#dc2626)}
+
+/* LISTENING INDICATOR */
+.listening-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--danger);margin-right:6px;animation:pulse 0.8s infinite;vertical-align:middle}
+
 /* RESPONSIVE */
-@media(max-width:900px){
-.dashboard{grid-template-columns:1fr;gap:12px}
-.dashboard .right-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:768px){
 .sidebar{display:none}
-.bottom-nav{display:flex}
-.content{padding:12px;padding-bottom:64px}
+.content{padding:16px}
+.welcome-screen .hero-icon{width:64px;height:64px;font-size:1.8rem}
+.welcome-screen h2{font-size:1.2rem}
+.otp-inputs input{width:42px;height:46px;font-size:1.1rem}
+.transcript-container{height:240px}
+.call-header{flex-direction:column;align-items:flex-start;gap:8px}
+.call-header .call-meta{text-align:left;width:100%;display:flex;justify-content:space-between}
+.topbar{padding:10px 14px}
 }
-@media(max-width:600px){
-.topbar{padding:10px 12px}
-.topbar .brand h1{font-size:0.95rem}
-.content{padding:8px;padding-bottom:60px;gap:10px}
-.dashboard{gap:10px}
-.dashboard .right-panel{grid-template-columns:1fr}
-.card{padding:12px}
-.call-screen .call-avatar{width:56px;height:56px;font-size:1.5rem}
-.call-screen #timer{font-size:2rem}
-.btn{font-size:0.8rem;padding:8px 12px;min-height:40px}
-.transcript-box{font-size:0.8rem;padding:8px}
-}
-@media(max-width:400px){
-.topbar .status .text{display:none}
+@media(max-width:480px){
+.content{padding:12px}
+.welcome-screen .hero-icon{width:56px;height:56px;font-size:1.5rem}
+.welcome-screen h2{font-size:1rem}
+.phone-input{max-width:100%}
+.otp-inputs{gap:6px}
+.otp-inputs input{width:38px;height:42px;font-size:1rem}
+.transcript-container{height:200px;padding:10px;font-size:0.8rem}
+.call-footer{gap:6px}
+.call-footer .btn{font-size:0.75rem;padding:10px;min-height:38px}
 }
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
 <header class="topbar">
   <div class="brand">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary)"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-    <h1>CallFlow</h1>
+    <h1>CallFlow <span>ENGINE</span></h1>
   </div>
   <div class="status">
+    <div class="lang-selector" id="langSelector">
+      <button data-lang="en" class="active">EN</button>
+      <button data-lang="ur">اردو</button>
+    </div>
     <span class="dot"></span>
-    <span class="text">All Systems Operational</span>
+    <span>Cloud Active</span>
   </div>
 </header>
 
-<!-- MAIN LAYOUT -->
 <div class="layout">
-  <!-- SIDEBAR (desktop) -->
   <aside class="sidebar">
-    <nav>
-      <button class="active">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Dashboard
-      </button>
-      <button>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Analytics
-      </button>
-      <button>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        Call Logs
-      </button>
-      <button>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        Settings
-      </button>
-    </nav>
-    <div class="agent-info">
-      <div class="avatar">DA</div>
-      <div class="info">
-        <div class="name">Digital Agent</div>
-        <div class="role">AI Operator</div>
-      </div>
+    <div class="agents-label">Agents</div>
+    <div class="agent-item active" data-agent="reception"><span class="indicator idle"></span>📋 Reception</div>
+    <div class="agent-item" data-agent="sales"><span class="indicator idle"></span>🛍 Sales</div>
+    <div class="agent-item" data-agent="marketing"><span class="indicator idle"></span>📢 Marketing</div>
+    <div class="agent-item" data-agent="support"><span class="indicator idle"></span>💬 Support</div>
+    <div class="agent-item" data-agent="inventory"><span class="indicator idle"></span>📦 Inventory</div>
+    <div style="margin-top:auto;padding:12px;background:rgba(255,255,255,0.02);border-radius:var(--radius-sm);font-size:0.65rem;color:var(--dim);line-height:1.4">
+      <strong style="color:var(--muted)">CallFlow Engine v2.0</strong><br>
+      Modular · Embeddable · Multi-Language<br>
+      <span style="font-size:0.55rem;color:var(--dim)">Web Speech API · Plugin Architecture</span>
     </div>
   </aside>
 
-  <!-- CONTENT -->
   <div class="content">
-    <div class="dashboard" id="dashboardView">
-      <!-- LEFT: Call Panel -->
-      <div class="card call-panel">
-        <div class="card-header"><h3>Active Line</h3><span id="liveBadge" class="dept-item" style="font-size:0.6rem;padding:3px 8px;background:rgba(239,68,68,0.15);color:var(--danger);border:none">STANDBY</span></div>
-        <div class="call-screen idle" id="callScreen">
-          <div class="call-avatar" id="callAvatar">📞</div>
-          <div id="caller-id">No Active Call</div>
-          <div id="timer">00:00</div>
-          <div id="call-status">Waiting for incoming connection...</div>
-          <div class="waveform hidden" id="waveform">
-            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+    <!-- PHONE INPUT -->
+    <div class="screen active" id="screenPhone">
+      <div class="welcome-screen">
+        <div class="hero-icon">📞</div>
+        <h2 id="welcomeTitle">Welcome to CallFlow</h2>
+        <p id="welcomeText">Enter your phone number to connect with our AI-powered call center. Experience natural, human-like conversations in multiple languages.</p>
+        <div class="phone-input">
+          <div class="input-group">
+            <span class="prefix">🇵🇰 +92</span>
+            <input type="tel" id="phoneInput" placeholder="300 1234567" maxlength="10" inputmode="numeric">
           </div>
-        </div>
-        <div class="call-controls">
-          <button class="btn btn-primary" id="btnSimulate">Simulate Incoming Call</button>
-          <div class="row" id="activeControls" style="display:none">
-            <button class="btn btn-outline" id="btnMute">🔇 Mute</button>
-            <button class="btn btn-danger" id="btnHangup">✕ End Call</button>
-          </div>
-          <button class="btn btn-outline" id="btnDiag" style="font-size:0.75rem">🛠 Audio Diagnostics</button>
-        </div>
-      </div>
-
-      <!-- CENTER: Transcript -->
-      <div class="card transcript-card">
-        <div class="card-header"><h3>Live Transcript</h3><span class="dept-item" id="transcriptStatus" style="font-size:0.6rem;padding:3px 8px;border:none;background:rgba(255,255,255,0.04)">Idle</span></div>
-        <div class="transcript-box" id="transcriptBox">
-          <div class="msg system">System ready. Press <strong>Simulate Incoming Call</strong> to start.</div>
-        </div>
-      </div>
-
-      <!-- RIGHT: Info Panel -->
-      <div class="right-panel">
-        <!-- Department -->
-        <div class="card">
-          <div class="card-header"><h3>Department Routing</h3></div>
-          <div class="dept-grid">
-            <div class="dept-item active" id="dept-reception">Reception</div>
-            <div class="dept-item" id="dept-sales">Sales</div>
-            <div class="dept-item" id="dept-marketing">Marketing</div>
-            <div class="dept-item" id="dept-refunds">Support</div>
-            <div class="dept-item" id="dept-inventory">Inventory</div>
-          </div>
-        </div>
-        <!-- Mood -->
-        <div class="card">
-          <div class="card-header"><h3>Customer Mood</h3></div>
-          <div class="mood-display">
-            <div class="mood-icon" id="moodIcon">😐</div>
-            <div class="mood-label" id="moodText">Neutral</div>
-            <div class="mood-bar"><div class="mood-bar-fill" id="moodBar" style="width:50%;background:var(--warn)"></div></div>
-          </div>
-          <div class="intent-box">
-            <h4>Detected Intent</h4>
-            <p id="intentText">—</p>
-          </div>
-        </div>
-        <!-- Activity -->
-        <div class="card" style="flex:1;min-height:0">
-          <div class="card-header"><h3>Activity</h3></div>
-          <ul class="log-list" id="activityLog"><li style="color:var(--dim);font-style:italic">No recent activity</li></ul>
+          <button class="btn btn-primary btn-full" id="btnSendOTP" disabled>Send Verification Code</button>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- BOTTOM NAV (mobile) -->
-<nav class="bottom-nav">
-  <button class="active" data-view="dashboard">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-    Dashboard
-  </button>
-  <button data-view="analytics">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    Analytics
-  </button>
-  <button data-view="logs">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-    Logs
-  </button>
-  <button data-view="settings">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    Settings
-  </button>
-</nav>
-
-<!-- INCOMING CALL MODAL -->
-<div class="modal-overlay" id="incomingModal">
-  <div class="modal-box">
-    <div class="ring-container">
-      <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <!-- OTP -->
+    <div class="screen" id="screenOTP">
+      <div class="otp-screen">
+        <h2>Verify Your Number</h2>
+        <p class="phone-display">Code sent to <strong id="otpPhoneDisplay">+92 300 1234567</strong></p>
+        <div class="otp-note" id="otpNote">📌 For demo, use code: <strong id="otpCodeDisplay">123456</strong></div>
+        <div class="otp-inputs" id="otpInputs">
+          <input type="text" maxlength="1" inputmode="numeric" data-index="0">
+          <input type="text" maxlength="1" inputmode="numeric" data-index="1">
+          <input type="text" maxlength="1" inputmode="numeric" data-index="2">
+          <input type="text" maxlength="1" inputmode="numeric" data-index="3">
+          <input type="text" maxlength="1" inputmode="numeric" data-index="4">
+          <input type="text" maxlength="1" inputmode="numeric" data-index="5">
+        </div>
+        <button class="btn btn-primary btn-full" id="btnVerify" disabled>Verify & Connect</button>
+      </div>
     </div>
-    <h2>Incoming Call</h2>
-    <p>Customer: <strong>+92 300 1234567</strong></p>
-    <div class="actions">
-      <button class="btn btn-success" id="btnAccept">Answer</button>
-      <button class="btn btn-danger" id="btnDecline">Decline</button>
+
+    <!-- CALL -->
+    <div class="screen" id="screenCall">
+      <div class="call-screen">
+        <div class="call-header">
+          <div class="agent-info">
+            <div class="agent-avatar" id="callAvatar" style="background:linear-gradient(135deg,var(--primary),var(--purple))">
+              A
+              <div class="ring"></div>
+            </div>
+            <div class="agent-details">
+              <div class="agent-name" id="agentName">Ayesha</div>
+              <div class="agent-role" id="agentRole">Receptionist</div>
+            </div>
+          </div>
+          <div class="call-meta">
+            <div class="timer" id="callTimer">00:00</div>
+            <div class="status" id="callStatus">● Connected</div>
+          </div>
+        </div>
+        <div class="transcript-container" id="transcriptBox">
+          <div class="msg system">Connecting you to CallFlow...</div>
+        </div>
+        <div class="call-footer">
+          <button class="btn btn-outline" id="btnMute">🔇 Mute</button>
+          <button class="btn btn-outline" id="btnTransfer">🔄 Transfer</button>
+          <button class="btn end" id="btnEndCall">✕ End Call</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-// === STATE ===
-let isCallActive = false;
-let callStartTime = null;
-let timerInterval = null;
-let currentAgent = 'reception';
-let recognition = null;
-const synth = window.speechSynthesis;
+// ============================================================
+// CallFlow Engine v2.0 — Modular Call Center AI
+// Architecture: Plugin-based agent system with multi-language
+// ============================================================
 
-const AGENTS = {
-  reception:{name:"Jessica (Reception)",greeting:"Hello, thank you for calling CallFlow. How can I direct your call today?",rate:1.0,pitch:1.0,keywords:[]},
-  sales:{name:"David (Sales)",greeting:"Hi there! Welcome to Sales. Looking for our latest collection?",rate:1.1,pitch:1.0,keywords:['buy','price','cost','offer','discount','sale','shirt','pant']},
-  marketing:{name:"Sarah (Marketing)",greeting:"Hello! Marketing here. How can we help promote your brand?",rate:1.0,pitch:1.2,keywords:['ad','promotion','campaign','brand']},
-  refunds:{name:"Michael (Support)",greeting:"I apologize for any inconvenience. I'm here to help with your return or refund.",rate:0.9,pitch:0.9,keywords:['return','refund','money','back','broken','damage','wrong']},
-  inventory:{name:"Rob (Stock)",greeting:"Inventory control. Please state the item code you're checking.",rate:1.0,pitch:0.8,keywords:['stock','available','inventory','quantity','size']}
+// ---- I18N ----
+const I18N = {
+  en: {
+    welcomeTitle: "Welcome to CallFlow",
+    welcomeText: "Enter your phone number to connect with our AI-powered call center. Experience natural, human-like conversations in multiple languages.",
+    phonePlaceholder: "300 1234567",
+    sendOTP: "Send Verification Code",
+    verifyTitle: "Verify Your Number",
+    verifyBtn: "Verify & Connect",
+    otpNote: "For demo, use code:",
+    mute: "Mute",
+    unmute: "Unmute",
+    transfer: "Transfer",
+    endCall: "End Call",
+    connected: "Connected",
+    ended: "Call Ended"
+  },
+  ur: {
+    welcomeTitle: "CallFlow میں خوش آمدید",
+    welcomeText: "اپنا فون نمبر درج کریں تاکہ ہمارے AI کال سینٹر سے رابطہ کریں۔ متعدد زبانوں میں قدرتی، انسانی گفتگو کا تجربہ کریں۔",
+    phonePlaceholder: "300 1234567",
+    sendOTP: "تصدیقی کوڈ بھیجیں",
+    verifyTitle: "اپنا نمبر تصدیق کریں",
+    verifyBtn: "تصدیق کریں اور منسلک ہوں",
+    otpNote: "ڈیمو کے لیے، کوڈ استعمال کریں:",
+    mute: "خاموش",
+    unmute: "آواز آن",
+    transfer: "منتقل کریں",
+    endCall: "کال ختم",
+    connected: "منسلک",
+    ended: "کال ختم ہوگئی"
+  }
 };
 
-// === DOM REFS ===
-const $=(id,el=document)=>el.getElementById(id);
-const btnSimulate=$('btnSimulate'), btnAccept=$('btnAccept'), btnDecline=$('btnDecline');
-const btnHangup=$('btnHangup'), btnMute=$('btnMute'), btnDiag=$('btnDiag');
-const modal=$('incomingModal'), activeControls=$('activeControls');
-const callScreen=$('callScreen'), callerId=$('caller-id'), timerEl=$('timer');
-const callStatus=$('call-status'), waveform=$('waveform'), liveBadge=$('liveBadge');
-const transcriptBox=$('transcriptBox'), transcriptStatus=$('transcriptStatus');
-const moodIcon=$('moodIcon'), moodText=$('moodText'), moodBar=$('moodBar');
-const intentText=$('intentText'), activityLog=$('activityLog'), callAvatar=$('callAvatar');
-
-// === INIT ===
-let isMuted=false;
-
-function init(){
-  if(!('webkitSpeechRecognition' in window)){
-    addLog("⚠ Web Speech API not supported. Use Chrome/Edge.",'system');
-  } else {
-    setupSpeechRecognition();
+// ---- AGENTS ----
+const AGENTS = {
+  reception: {
+    id: 'reception',
+    name: { en: 'Ayesha', ur: 'عائشہ' },
+    role: { en: 'Receptionist', ur: 'ریسپشنسٹ' },
+    color: 'linear-gradient(135deg,#3b82f6,#8b5cf6)',
+    emoji: '📋',
+    voice: { rate: 1.0, pitch: 1.1 },
+    style: 'warm, welcoming, professional',
+    gender: 'female',
+    async handle(engine, text, lang) {
+      if (engine.isFirstInteraction) {
+        engine.isFirstInteraction = false;
+        const greeting = lang === 'ur'
+          ? 'السلام علیکم! CallFlow میں خوش آمدید۔ ہم ایک جدید کاروباری حل فراہم کرنے والی کمپنی ہیں۔ ہم کپڑے، مارکیٹنگ، اور کسٹمر سپورٹ کی خدمات فراہم کرتے ہیں۔ آپ کی کیا مدد کر سکتا ہوں؟'
+          : 'Assalam-o-Alaikum! Welcome to CallFlow. We are a modern business solutions provider. We offer clothing, marketing, and customer support services. How may I help you today?';
+        engine.speak(greeting, 'agent');
+        return;
+      }
+      const routing = engine.routeCall(text, lang);
+      if (routing) {
+        const msg = lang === 'ur'
+          ? `بہت اچھا، میں آپ کو ${routing.urName} ڈیپارٹمنٹ سے منسلک کر رہی ہوں۔ برائے مہربانی انتظار کریں۔`
+          : `Excellent! I'm connecting you to our ${routing.name} department. Please hold.`;
+        engine.speak(msg, 'agent');
+        setTimeout(() => engine.transferTo(routing.id), 2000);
+      } else {
+        const msgs = {
+          en: ["Could you please tell me more about your requirement?", "How can I assist you today?", "Would you like to know about our products or services?"],
+          ur: ["برائے مہربانی اپنی ضرورت کے بارے میں مزید بتائیں۔", "آج میں آپ کی کیا مدد کر سکتی ہوں؟", "کیا آپ ہماری مصنوعات یا خدمات کے بارے میں جاننا چاہیں گے؟"]
+        };
+        const list = msgs[lang] || msgs.en;
+        engine.speak(list[Math.floor(Math.random() * list.length)], 'agent');
+      }
+    }
+  },
+  sales: {
+    id: 'sales',
+    name: { en: 'Zara', ur: 'زارا' },
+    role: { en: 'Sales Executive', ur: 'سیلز ایگزیکٹو' },
+    color: 'linear-gradient(135deg,#ec4899,#f59e0b)',
+    emoji: '🛍',
+    voice: { rate: 1.1, pitch: 1.3 },
+    style: 'energetic, persuasive, friendly',
+    gender: 'female',
+    async handle(engine, text, lang) {
+      if (engine.isFirstInteraction) {
+        engine.isFirstInteraction = false;
+        const msg = lang === 'ur'
+          ? 'السلام علیکم! میں زارہ ہوں، سیلز ڈیپارٹمنٹ۔ آج میں آپ کی کیا مدد کر سکتی ہوں؟ ہمارے پاس اعلیٰ معیار کے کپڑے موجود ہیں۔'
+          : 'Assalam-o-Alaikum! I\'m Zara from Sales. What can I help you with today? We have premium quality fabrics and clothing available.';
+        engine.speak(msg, 'agent');
+        return;
+      }
+      const item = engine.extractProduct(text);
+      if (item) {
+        const stock = engine.checkInventory(item);
+        if (stock.available) {
+          const msg = lang === 'ur'
+            ? `جی ہاں! ${stock.name} ہمارے پاس موجود ہے۔ ${stock.fabric} میں دستیاب ہے۔ قیمت ${stock.price} روپے ہے۔ کیا آپ آرڈر کرنا چاہیں گے؟`
+            : `Yes! ${stock.name} is available. It comes in ${stock.fabric}. The price is PKR ${stock.price}. Would you like to place an order?`;
+          engine.speak(msg, 'agent');
+        } else {
+          const msg = lang === 'ur'
+            ? `معاف کیجیے، ${stock.name} فی الحال دستیاب نہیں ہے۔ کیا آپ کچھ اور دیکھنا چاہیں گے؟`
+            : `I apologize, ${stock.name} is currently out of stock. Would you like to look at something else?`;
+          engine.speak(msg, 'agent');
+        }
+      } else {
+        const msgs = {
+          en: ["What type of clothing are you looking for? We have shalwar kameez, kurtas, shirts, and more.", "Which fabric do you prefer? Cotton, polyester, or lawn?", "Any specific color or size you're looking for?"],
+          ur: ["آپ کس قسم کے کپڑے تلاش کر رہے ہیں؟ ہمارے پاس شلوار قمیض، کرتہ، شرٹ اور بہت کچھ ہے۔", "آپ کون سا کپڑا پسند کریں گے؟ سوتی، پالئیےسٹر یا لان؟", "کوئی خاص رنگ یا سائز؟"]
+        };
+        engine.speak((msgs[lang] || msgs.en)[Math.floor(Math.random() * 3)], 'agent');
+      }
+    }
+  },
+  marketing: {
+    id: 'marketing',
+    name: { en: 'Ahmed', ur: 'احمد' },
+    role: { en: 'Marketing Specialist', ur: 'مارکیٹنگ سپیشلسٹ' },
+    color: 'linear-gradient(135deg,#8b5cf6,#3b82f6)',
+    emoji: '📢',
+    voice: { rate: 1.05, pitch: 0.9 },
+    style: 'creative, enthusiastic, confident',
+    gender: 'male',
+    async handle(engine, text, lang) {
+      if (engine.isFirstInteraction) {
+        engine.isFirstInteraction = false;
+        const msg = lang === 'ur'
+          ? 'السلام علیکم! میں احمد ہوں، مارکیٹنگ ڈیپارٹمنٹ۔ کیا آپ ہمارے پروموشنل کیمپینز کے بارے میں جاننا چاہیں گے؟'
+          : 'Assalam-o-Alaikum! Ahmed here from Marketing. Would you like to hear about our ongoing promotional campaigns?';
+        engine.speak(msg, 'agent');
+        return;
+      }
+      const msgs = {
+        en: [
+          "We have an exciting summer sale! Up to 40% off on all lawn collections. Would you like to know more?",
+          "Our new brand awareness campaign is getting great results. We can help promote your business too.",
+          "Would you like to receive updates about our future promotions and discounts?"
+        ],
+        ur: [
+          "ہمارے پاس گرمیوں کا زبردست سیل ہے! تمام لان کلیکشن پر 40% تک چھوٹ۔ کیا آپ مزید جاننا چاہیں گے؟",
+          "ہماری نئی برانڈ آگاہی مہم بہترین نتائج دے رہی ہے۔ ہم آپ کے کاروبار کو بھی فروغ دے سکتے ہیں۔",
+          "کیا آپ مستقبل میں ہماری پروموشنز اور ڈسکاؤنٹس کے بارے میں معلومات حاصل کرنا چاہیں گے؟"
+        ]
+      };
+      engine.speak((msgs[lang] || msgs.en)[Math.floor(Math.random() * 3)], 'agent');
+    }
+  },
+  support: {
+    id: 'support',
+    name: { en: 'Fatima', ur: 'فاطمہ' },
+    role: { en: 'Support Agent', ur: 'سپورٹ ایجنٹ' },
+    color: 'linear-gradient(135deg,#10b981,#059669)',
+    emoji: '💬',
+    voice: { rate: 0.9, pitch: 1.0 },
+    style: 'empathetic, patient, calm',
+    gender: 'female',
+    async handle(engine, text, lang) {
+      if (engine.isFirstInteraction) {
+        engine.isFirstInteraction = false;
+        const msg = lang === 'ur'
+          ? 'السلام علیکم! میں فاطمہ ہوں، سپورٹ ڈیپارٹمنٹ۔ میں آپ کی مدد کے لیے یہاں ہوں۔ برائے مہربانی بتائیں کہ آپ کو کس مسئلہ کا سامنا ہے؟'
+          : 'Assalam-o-Alaikum! I\'m Fatima from Customer Support. I\'m here to help. Please tell me what issue you\'re facing.';
+        engine.speak(msg, 'agent');
+        return;
+      }
+      const refund = ['return','refund','money back','واپس','رقم','refund'].some(k => text.includes(k));
+      if (refund) {
+        const msg = lang === 'ur'
+          ? 'میں آپ کی پریشانی سمجھتی ہوں۔ برائے مہربانی اپنا آرڈر آئی ڈی فراہم کریں، میں آپ کی ریفنڈ کارروائی تیزی سے مکمل کروں گی۔'
+          : 'I understand your concern. Please provide your Order ID and I will process the refund quickly for you.';
+        engine.speak(msg, 'agent');
+      } else {
+        const msgs = {
+          en: ["I apologize for the inconvenience. Let me check our system.", "I'm here to help resolve this. Could you share more details?", "Let me look into this matter right away."],
+          ur: ["تکلیف کے لیے معذرت۔ میں اپنے سسٹم میں چیک کرتی ہوں۔", "میں آپ کی مدد کے لیے یہاں ہوں۔ کیا آپ مزید تفصیلات بتا سکتے ہیں؟", "میں اس معاملے کو فوراً دیکھتی ہوں۔"]
+        };
+        engine.speak((msgs[lang] || msgs.en)[Math.floor(Math.random() * 3)], 'agent');
+      }
+    }
+  },
+  inventory: {
+    id: 'inventory',
+    name: { en: 'Usman', ur: 'عثمان' },
+    role: { en: 'Inventory Manager', ur: 'انوینٹری مینیجر' },
+    color: 'linear-gradient(135deg,#f59e0b,#d97706)',
+    emoji: '📦',
+    voice: { rate: 0.95, pitch: 0.8 },
+    style: 'precise, systematic, detail-oriented',
+    gender: 'male',
+    async handle(engine, text, lang) {
+      if (engine.isFirstInteraction) {
+        engine.isFirstInteraction = false;
+        const msg = lang === 'ur'
+          ? 'السلام علیکم! میں عثمان ہوں، انوینٹری ڈیپارٹمنٹ۔ آپ کس پروڈکٹ کے بارے میں معلومات چاہتے ہیں؟'
+          : 'Assalam-o-Alaikum! Usman here, Inventory department. Which product would you like to check?';
+        engine.speak(msg, 'agent');
+        return;
+      }
+      const item = engine.extractProduct(text);
+      if (item) {
+        const stock = engine.checkInventory(item);
+        const msg = lang === 'ur'
+          ? `${stock.name}: ${stock.quantity} عدد دستیاب ہیں۔ ${stock.fabric} میں قیمت ${stock.price} روپے ہے۔`
+          : `${stock.name}: ${stock.quantity} units available. In ${stock.fabric}, priced at PKR ${stock.price}.`;
+        engine.speak(msg, 'agent');
+      } else {
+        const msgs = {
+          en: ["Please specify the item name or code.", "What product details do you need? We have shirts, shalwar kameez, kurtas, and more.", "I can check stock, price, and fabric details for any item."],
+          ur: ["برائے مہربانی آئٹم کا نام یا کوڈ بتائیں۔", "آپ کو کس پروڈکٹ کی تفصیلات چاہئیں؟", "میں کسی بھی آئٹم کا اسٹاک، قیمت اور کپڑے کی تفصیلات چیک کر سکتا ہوں۔"]
+        };
+        engine.speak((msgs[lang] || msgs.en)[Math.floor(Math.random() * 3)], 'agent');
+      }
+    }
   }
-  btnSimulate.addEventListener('click',startIncomingCall);
-  btnAccept.addEventListener('click',acceptCall);
-  btnDecline.addEventListener('click',endCall);
-  btnHangup.addEventListener('click',endCall);
-  btnMute.addEventListener('click',toggleMute);
-  btnDiag.addEventListener('click',runDiagnostics);
-  // Bottom nav
-  document.querySelectorAll('.bottom-nav button').forEach(b=>{
-    b.addEventListener('click',()=>{
-      document.querySelectorAll('.bottom-nav button').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
+};
+
+// ---- INVENTORY DATABASE ----
+const INVENTORY = [
+  { id: 1, name: 'Shalwar Kameez', urName: 'شلوار قمیض', fabric: 'Cotton', price: 2499, quantity: 50, keywords: ['shalwar','kameez','suit','شلوار','قمیض','suite'] },
+  { id: 2, name: 'Shalwar Kameez', urName: 'شلوار قمیض', fabric: 'Polyester', price: 1999, quantity: 35, keywords: ['shalwar','kameez','polyester','شلوار','قمیض'] },
+  { id: 3, name: 'Kurta', urName: 'کرتہ', fabric: 'Cotton', price: 1499, quantity: 40, keywords: ['kurta','کرتہ'] },
+  { id: 4, name: 'Kurta', urName: 'کرتہ', fabric: 'Lawn', price: 1799, quantity: 25, keywords: ['kurta','lawn','کرتہ','لان'] },
+  { id: 5, name: 'Shirt', urName: 'شرٹ', fabric: 'Cotton', price: 1299, quantity: 60, keywords: ['shirt','شرٹ'] },
+  { id: 6, name: 'Shirt', urName: 'شرٹ', fabric: 'Polyester', price: 999, quantity: 45, keywords: ['shirt','polyester','شرٹ'] },
+  { id: 7, name: 'Trouser', urName: 'پتلون', fabric: 'Cotton', price: 1599, quantity: 30, keywords: ['trouser','pant','پتلون','pants'] },
+  { id: 8, name: 'Waistcoat', urName: 'واسکٹ', fabric: 'Cotton', price: 899, quantity: 20, keywords: ['waistcoat','wasqat','واسکٹ'] }
+];
+
+// ============================================================
+// ENGINE
+// ============================================================
+class CallFlowEngine {
+  constructor() {
+    this.state = 'idle'; // idle → phone → otp → call → ended
+    this.lang = 'en';
+    this.phone = '';
+    this.otp = '123456';
+    this.currentAgent = null;
+    this.isFirstInteraction = true;
+    this.isMuted = false;
+    this.callStartTime = null;
+    this.timerInterval = null;
+    this.recognition = null;
+    this.synth = window.speechSynthesis;
+    this.transcript = [];
+    this.agents = AGENTS;
+    this.inventory = INVENTORY;
+    this.userContext = {};
+
+    this.initDOM();
+    this.initSpeech();
+    this.initEvents();
+    this.updateUI();
+  }
+
+  initDOM() {
+    this.$ = (id) => document.getElementById(id);
+    this.screenPhone = this.$('screenPhone');
+    this.screenOTP = this.$('screenOTP');
+    this.screenCall = this.$('screenCall');
+    this.phoneInput = this.$('phoneInput');
+    this.btnSendOTP = this.$('btnSendOTP');
+    this.btnVerify = this.$('btnVerify');
+    this.otpInputs = document.querySelectorAll('#otpInputs input');
+    this.otpCodeDisplay = this.$('otpCodeDisplay');
+    this.otpPhoneDisplay = this.$('otpPhoneDisplay');
+    this.transcriptBox = this.$('transcriptBox');
+    this.callTimer = this.$('callTimer');
+    this.callStatus = this.$('callStatus');
+    this.agentName = this.$('agentName');
+    this.agentRole = this.$('agentRole');
+    this.callAvatar = this.$('callAvatar');
+    this.btnMute = this.$('btnMute');
+    this.btnTransfer = this.$('btnTransfer');
+    this.btnEndCall = this.$('btnEndCall');
+    this.langButtons = document.querySelectorAll('#langSelector button');
+    this.agentItems = document.querySelectorAll('.agent-item');
+  }
+
+  initEvents() {
+    // Phone input
+    this.phoneInput.addEventListener('input', () => {
+      this.phoneInput.value = this.phoneInput.value.replace(/\D/g, '').slice(0, 10);
+      this.btnSendOTP.disabled = this.phoneInput.value.length < 10;
     });
-  });
-}
+    this.phoneInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !this.btnSendOTP.disabled) this.sendOTP(); });
+    this.btnSendOTP.addEventListener('click', () => this.sendOTP());
 
-// === SPEECH RECOGNITION ===
-function setupSpeechRecognition(){
-  recognition=new webkitSpeechRecognition();
-  recognition.continuous=true;
-  recognition.interimResults=false;
-  recognition.lang='en-US';
-  recognition.onstart=()=>{
-    waveform.classList.remove('hidden');
-    transcriptStatus.textContent='Listening...';
-    transcriptStatus.style.color='var(--success)';
-  };
-  recognition.onend=()=>{
-    waveform.classList.add('hidden');
-    if(isCallActive) setTimeout(()=>{if(isCallActive) try{recognition.start()}catch(e){}},800);
-  };
-  recognition.onerror=(e)=>{
-    if(e.error==='not-allowed'){
-      addLog("❌ Microphone blocked. Allow mic access in browser settings.",'system');
-    } else if(e.error!=='no-speech'){
-      addLog("❌ Mic error: "+e.error,'system');
+    // OTP
+    this.otpInputs.forEach((inp, i) => {
+      inp.addEventListener('input', () => {
+        inp.value = inp.value.replace(/\D/g, '').slice(0, 1);
+        if (inp.value) inp.classList.add('filled');
+        else inp.classList.remove('filled');
+        if (inp.value && i < 5) this.otpInputs[i + 1].focus();
+        this.checkOTP();
+      });
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !inp.value && i > 0) {
+          this.otpInputs[i - 1].focus();
+          this.otpInputs[i - 1].value = '';
+          this.otpInputs[i - 1].classList.remove('filled');
+        }
+      });
+    });
+    this.btnVerify.addEventListener('click', () => this.verifyOTP());
+
+    // Call controls
+    this.btnMute.addEventListener('click', () => this.toggleMute());
+    this.btnEndCall.addEventListener('click', () => this.endCall());
+    this.btnTransfer.addEventListener('click', () => this.showTransferMenu());
+
+    // Language
+    this.langButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.langButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.lang = btn.dataset.lang;
+        this.updateUI();
+      });
+    });
+  }
+
+  updateUI() {
+    const t = I18N[this.lang] || I18N.en;
+    this.$('welcomeTitle').textContent = t.welcomeTitle;
+    this.$('welcomeText').textContent = t.welcomeText;
+    this.phoneInput.placeholder = t.phonePlaceholder;
+    this.btnSendOTP.textContent = t.sendOTP;
+    this.$('verifyTitle') && (this.$('verifyTitle').textContent = t.verifyTitle);
+    this.btnVerify.textContent = t.verifyBtn;
+    const note = this.$('otpNote');
+    if (note) note.innerHTML = `📌 ${t.otpNote} <strong id="otpCodeDisplay">${this.otp}</strong>`;
+    this.btnMute.textContent = this.isMuted ? (this.lang === 'ur' ? '🔊 آواز آن' : '🔊 Unmute') : (this.lang === 'ur' ? '🔇 خاموش' : '🔇 Mute');
+    this.btnTransfer.textContent = t.transfer;
+    this.btnEndCall.textContent = t.endCall;
+    if (this.callStatus) {
+      this.callStatus.textContent = '● ' + (this.state === 'ended' ? t.ended : t.connected);
     }
-  };
-  recognition.onresult=(e)=>{
-    const t=e.results[e.results.length-1][0].transcript.trim();
-    if(!t) return;
-    addLog(t,'customer');
-    processUserSpeech(t.toLowerCase());
-  };
-}
+  }
 
-// === CALL LOGIC ===
-function startIncomingCall(){modal.classList.add('open')}
+  // ---- SCREEN MANAGEMENT ----
+  showScreen(id) {
+    [this.screenPhone, this.screenOTP, this.screenCall].forEach(s => s.classList.remove('active'));
+    if (id === 'phone') this.screenPhone.classList.add('active');
+    else if (id === 'otp') this.screenOTP.classList.add('active');
+    else if (id === 'call') this.screenCall.classList.add('active');
+  }
 
-function acceptCall(){
-  isCallActive=true;
-  modal.classList.remove('open');
-  btnSimulate.style.display='none';
-  activeControls.style.display='flex';
-  callScreen.classList.remove('idle');
-  callStatus.textContent='Connected';
-  callStatus.style.color='var(--success)';
-  callerId.textContent='Customer: +92 300 1234567';
-  callAvatar.textContent='👤';
-  callAvatar.classList.add('active');
-  liveBadge.textContent='LIVE';
-  liveBadge.style.cssText='font-size:0.6rem;padding:3px 8px;background:rgba(16,185,129,0.15);color:var(--success);border:none;animation:pulse 2s infinite';
-  callStartTime=Date.now();
-  timerInterval=setInterval(()=>{
-    const d=Math.floor((Date.now()-callStartTime)/1000);
-    timerEl.textContent=`${String(Math.floor(d/60)).padStart(2,'0')}:${String(d%60).padStart(2,'0')}`;
-  },1000);
-  switchDepartment('reception');
-  addLog("Call connected. Duration: 00:00",'system');
-  if(synth.speaking)synth.cancel();
-  speak(AGENTS.reception.greeting);
-  try{recognition.start()}catch(e){}
-}
+  // ---- OTP FLOW ----
+  sendOTP() {
+    this.phone = '+92 ' + this.phoneInput.value;
+    this.otp = String(100000 + Math.floor(Math.random() * 900000));
+    this.showScreen('otp');
+    this.otpPhoneDisplay.textContent = this.phone;
+    this.otpCodeDisplay.textContent = this.otp;
+    this.otpInputs.forEach(inp => { inp.value = ''; inp.classList.remove('filled'); });
+    this.btnVerify.disabled = true;
+    this.otpInputs[0].focus();
+    this.state = 'otp';
+  }
 
-function endCall(){
-  isCallActive=false;
-  clearInterval(timerInterval);
-  try{recognition&&recognition.stop()}catch(e){}
-  synth.cancel();
-  modal.classList.remove('open');
-  activeControls.style.display='none';
-  btnSimulate.style.display='block';
-  callScreen.classList.add('idle');
-  callStatus.textContent='Call Ended';
-  callStatus.style.color='var(--muted)';
-  callerId.textContent='No Active Call';
-  timerEl.textContent='00:00';
-  callAvatar.textContent='📞';
-  callAvatar.classList.remove('active');
-  liveBadge.textContent='STANDBY';
-  liveBadge.style.cssText='font-size:0.6rem;padding:3px 8px;background:rgba(239,68,68,0.15);color:var(--danger);border:none;animation:none';
-  waveform.classList.add('hidden');
-  transcriptStatus.textContent='Idle';
-  transcriptStatus.style.color='';
-  addLog("Call disconnected.",'system');
-}
+  checkOTP() {
+    const val = Array.from(this.otpInputs).map(i => i.value).join('');
+    this.btnVerify.disabled = val.length < 6;
+  }
 
-function toggleMute(){
-  isMuted=!isMuted;
-  btnMute.textContent=isMuted?'🔊 Unmute':'🔇 Mute';
-  addLog(isMuted?"Agent muted":"Agent unmuted",'system');
-}
-
-// === SPEECH PROCESSING ===
-function processUserSpeech(text){
-  analyzeSentiment(text);
-  const target=detectIntent(text);
-  setTimeout(()=>{
-    if(target&&target!==currentAgent){
-      speak(`Please hold while I transfer you to the ${target} department.`);
-      addLog(`Transferring to ${target}...`,'system');
-      setTimeout(()=>{
-        switchDepartment(target);
-        speak(AGENTS[target].greeting);
-      },2500);
+  verifyOTP() {
+    const val = Array.from(this.otpInputs).map(i => i.value).join('');
+    if (val === this.otp) {
+      this.state = 'call';
+      this.showScreen('call');
+      this.startCall();
     } else {
-      generateResponse(text);
+      this.otpInputs.forEach(inp => {
+        inp.style.borderColor = 'var(--danger)';
+        setTimeout(() => inp.style.borderColor = '', 1000);
+      });
     }
-  },800);
-}
-
-function detectIntent(text){
-  for(const[dept,data]of Object.entries(AGENTS)){
-    if(dept==='reception') continue;
-    if(data.keywords.some(k=>text.includes(k))) return dept;
   }
-  return null;
-}
 
-function generateResponse(text){
-  const responses={
-    reception:"I understand. Could you clarify if this is regarding sales, a return, or stock inquiry?",
-    sales:"That sounds great! Would you like to place an order or know more about our products?",
-    refunds:"I've noted your concern. Please share your Order ID so I can process this quickly.",
-    marketing:"Thank you. Let me check our ongoing campaigns for you.",
-    inventory:"Let me look up the stock details in our system."
-  };
-  speak(responses[currentAgent]||"Thank you. Let me check on that for you.");
-}
+  // ---- CALL ----
+  startCall() {
+    this.currentAgent = 'reception';
+    this.isFirstInteraction = true;
+    this.callStartTime = Date.now();
+    this.transcriptBox.innerHTML = '<div class="msg system">Connecting you to CallFlow...</div>';
+    this.callTimer.textContent = '00:00';
+    this.callStatus.textContent = '● Connected';
+    this.callStatus.style.color = 'var(--success)';
+    this.updateAgentUI();
+    this.timerInterval = setInterval(() => {
+      const d = Math.floor((Date.now() - this.callStartTime) / 1000);
+      this.callTimer.textContent = `${String(Math.floor(d/60)).padStart(2,'0')}:${String(d%60).padStart(2,'0')}`;
+    }, 1000);
+    // Start agent
+    const agent = this.agents.reception;
+    setTimeout(() => {
+      this.isFirstInteraction = true;
+      agent.handle(this, '', this.lang);
+    }, 800);
+    // Start mic after a moment
+    setTimeout(() => this.startMic(), 1500);
+    this.updateAgentIndicators();
+  }
 
-function speak(text){
-  if(isMuted) return;
-  if(synth.speaking)synth.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  const a=AGENTS[currentAgent];
-  u.rate=a.rate;u.pitch=a.pitch;
-  addLog(text,'agent');
-  synth.speak(u);
-}
+  startMic() {
+    if (!this.recognition) return;
+    try { this.recognition.start(); } catch(e) {}
+  }
 
-// === ROUTING ===
-function switchDepartment(dept){
-  currentAgent=dept;
-  document.querySelectorAll('.dept-item').forEach(b=>b.classList.remove('active'));
-  document.getElementById('dept-'+dept).classList.add('active');
-  intentText.textContent='Routed to: '+dept.charAt(0).toUpperCase()+dept.slice(1);
-}
+  async handleUserInput(text) {
+    if (!text.trim()) return;
+    this.showListening(false);
+    const agent = this.agents[this.currentAgent];
+    if (agent) {
+      await agent.handle(this, text, this.lang);
+    }
+    // Restart mic after response
+    setTimeout(() => this.startMic(), 1500);
+  }
 
-// === SENTIMENT ===
-function analyzeSentiment(text){
-  const neg=['angry','bad','slow','stupid','wrong','late','hate','terrible','frustrated','annoyed'];
-  const pos=['good','great','thanks','happy','fast','love','excellent','amazing','perfect','wonderful'];
-  let score=50,label='Neutral',icon='😐',color='var(--warn)';
-  if(neg.some(w=>text.includes(w))){score=15;label='Frustrated';icon='😠';color='var(--danger)';}
-  else if(pos.some(w=>text.includes(w))){score=85;label='Happy';icon='😊';color='var(--success)';}
-  moodIcon.textContent=icon;
-  moodText.textContent=label;
-  moodBar.style.width=score+'%';
-  moodBar.style.background=color;
-}
+  speak(text, type) {
+    if (this.isMuted && type === 'agent') return;
+    this.addMessage(text, type);
+    if (type === 'agent' && !this.isMuted) {
+      if (this.synth.speaking) this.synth.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      const agent = this.agents[this.currentAgent];
+      if (agent) {
+        u.rate = agent.voice.rate;
+        u.pitch = agent.voice.pitch;
+      }
+      this.synth.speak(u);
+    }
+  }
 
-// === LOGGING ===
-function addLog(message,type){
-  const t=new Date();
-  const time=`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
-  const d=document.createElement('div');
-  d.className='msg '+type;
-  d.innerHTML=message+(type!=='system'?`<span class="time">${time}</span>`:'');
-  transcriptBox.appendChild(d);
-  transcriptBox.scrollTop=transcriptBox.scrollHeight;
-  if(type!=='system'){
-    const li=document.createElement('li');
-    li.innerHTML=`<span><strong>${type==='agent'?'AI':'User'}:</strong> ${message.substring(0,24)}...</span><span class="time">${time}</span>`;
-    activityLog.prepend(li);
-    if(activityLog.children[0].textContent==='No recent activity') activityLog.innerHTML='';
-    if(activityLog.children.length>20) activityLog.removeChild(activityLog.lastChild);
+  addMessage(text, type) {
+    const t = new Date();
+    const time = `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+    const d = document.createElement('div');
+    d.className = 'msg ' + type;
+    d.innerHTML = text + `<span class="time">${time}</span>`;
+    this.transcriptBox.appendChild(d);
+    this.transcriptBox.scrollTop = this.transcriptBox.scrollHeight;
+  }
+
+  transferTo(agentId) {
+    this.isFirstInteraction = true;
+    this.currentAgent = agentId;
+    this.updateAgentUI();
+    this.updateAgentIndicators();
+    const agent = this.agents[agentId];
+    const msg = this.lang === 'ur'
+      ? `آپ اب ${agent.role.ur} ${agent.name.ur} سے بات کر رہے ہیں۔`
+      : `You are now connected to ${agent.name.en}, our ${agent.role.en}.`;
+    this.addMessage(msg, 'system');
+    setTimeout(() => {
+      this.isFirstInteraction = true;
+      agent.handle(this, '', this.lang);
+    }, 1000);
+  }
+
+  routeCall(text, lang) {
+    const ltext = text.toLowerCase();
+    if (['buy','price','cost','shirt','pant','shalwar','kameez','suit','cloth','خری','قیمت','کپڑ','شلوار','قمیض','شرٹ'].some(k => ltext.includes(k))) {
+      return { id: 'sales', name: 'Sales', urName: 'سیلز' };
+    }
+    if (['ad','promotion','campaign','brand','market','marketing','اشتہار','پروموشن','مہم'].some(k => ltext.includes(k))) {
+      return { id: 'marketing', name: 'Marketing', urName: 'مارکیٹنگ' };
+    }
+    if (['return','refund','complaint','broken','damage','wrong','problem','issue','help','واپس','شکایت','مسئلہ','مدد'].some(k => ltext.includes(k))) {
+      return { id: 'support', name: 'Support', urName: 'سپورٹ' };
+    }
+    if (['stock','available','inventory','quantity','item','code','اسٹاک','دستیاب','انوینٹری','آئٹم'].some(k => ltext.includes(k))) {
+      return { id: 'inventory', name: 'Inventory', urName: 'انوینٹری' };
+    }
+    return null;
+  }
+
+  extractProduct(text) {
+    const ltext = text.toLowerCase();
+    for (const item of this.inventory) {
+      if (item.keywords.some(k => ltext.includes(k))) {
+        return item;
+      }
+    }
+    // Try to infer product type
+    if (ltext.includes('shalwar') || ltext.includes('kameez') || ltext.includes('suit') || ltext.includes('شلوار') || ltext.includes('قمیض')) {
+      return this.inventory[0]; // Default cotton shalwar kameez
+    }
+    if (ltext.includes('kurta') || ltext.includes('کرتہ')) {
+      return this.inventory[2]; // Cotton kurta
+    }
+    if (ltext.includes('shirt') || ltext.includes('شرٹ')) {
+      return this.inventory[4]; // Cotton shirt
+    }
+    return null;
+  }
+
+  checkInventory(item) {
+    return item || { name: 'Product', quantity: 0, fabric: 'N/A', price: 0 };
+  }
+
+  showListening(active) {
+    const status = this.$('callStatus');
+    if (status) {
+      status.innerHTML = active
+        ? `<span class="listening-dot"></span>Listening...`
+        : '● Connected';
+    }
+  }
+
+  // ---- UI UPDATES ----
+  updateAgentUI() {
+    const agent = this.agents[this.currentAgent];
+    if (!agent) return;
+    const lang = this.lang;
+    this.agentName.textContent = agent.name[lang] || agent.name.en;
+    this.agentRole.textContent = agent.role[lang] || agent.role.en;
+    this.callAvatar.style.background = agent.color;
+    this.callAvatar.textContent = agent.emoji;
+  }
+
+  updateAgentIndicators() {
+    this.agentItems.forEach(item => {
+      item.classList.remove('active');
+      const indicator = item.querySelector('.indicator');
+      if (indicator) {
+        indicator.className = 'indicator idle';
+      }
+      if (item.dataset.agent === this.currentAgent) {
+        item.classList.add('active');
+        if (indicator) indicator.className = 'indicator busy';
+      }
+    });
+  }
+
+  toggleMute() {
+    this.isMuted = !this.isMuted;
+    this.updateUI();
+    if (this.isMuted && this.synth.speaking) this.synth.cancel();
+  }
+
+  showTransferMenu() {
+    const agents = ['sales', 'marketing', 'support', 'inventory'];
+    const current = this.currentAgent;
+    const list = agents.filter(a => a !== current);
+    if (list.length === 0) return;
+    // Simple cycle through available agents
+    const next = list[Math.floor(Math.random() * list.length)];
+    const agent = this.agents[next];
+    const msg = this.lang === 'ur'
+      ? `آپ کو ${agent.role.ur} میں منتقل کیا جا رہا ہے۔`
+      : `Transferring you to ${agent.role.en}.`;
+    this.addMessage(msg, 'system');
+    setTimeout(() => this.transferTo(next), 1500);
+  }
+
+  endCall() {
+    this.state = 'ended';
+    clearInterval(this.timerInterval);
+    if (this.synth.speaking) this.synth.cancel();
+    try { if (this.recognition) this.recognition.stop(); } catch(e) {}
+    this.callStatus.textContent = '● Call Ended';
+    this.callStatus.style.color = 'var(--dim)';
+    this.addMessage(this.lang === 'ur' ? 'کال ختم ہوگئی۔ شکریہ!' : 'Call ended. Thank you for calling!', 'system');
+    setTimeout(() => {
+      this.state = 'idle';
+      this.currentAgent = null;
+      this.showScreen('phone');
+      this.phoneInput.value = '';
+      this.btnSendOTP.disabled = true;
+      this.agentItems.forEach(item => {
+        item.classList.remove('active');
+        const indicator = item.querySelector('.indicator');
+        if (indicator) indicator.className = 'indicator idle';
+      });
+    }, 3000);
+  }
+
+  // ---- SPEECH ----
+  initSpeech() {
+    if (!('webkitSpeechRecognition' in window)) {
+      this.addMessage('⚠ Speech recognition not available. Use Chrome/Edge.', 'system');
+      return;
+    }
+    this.recognition = new webkitSpeechRecognition();
+    this.recognition.continuous = true;
+    this.recognition.interimResults = false;
+    this.recognition.lang = 'en-US';
+
+    this.recognition.onstart = () => {
+      this.showListening(true);
+    };
+
+    this.recognition.onend = () => {
+      this.showListening(false);
+      if (this.state === 'call') {
+        setTimeout(() => {
+          if (this.state === 'call') {
+            try { this.recognition.start(); } catch(e) {}
+          }
+        }, 500);
+      }
+    };
+
+    this.recognition.onerror = (e) => {
+      if (e.error === 'not-allowed') {
+        this.addMessage('❌ Microphone access denied. Please allow mic permissions.', 'system');
+      }
+    };
+
+    this.recognition.onresult = (e) => {
+      const text = e.results[e.results.length - 1][0].transcript.trim();
+      if (text) {
+        this.addMessage(text, 'user');
+        this.handleUserInput(text);
+      }
+    };
   }
 }
 
-// === DIAGNOSTICS ===
-function runDiagnostics(){
-  addLog("── Diagnostics ──",'system');
-  if('speechSynthesis' in window){addLog("✔ Text-to-Speech: Available",'system');
-    try{synth.speak(new SpeechSynthesisUtterance("Test"));}catch(e){addLog("❌ TTS failed: "+e.message,'system');}
-  } else addLog("❌ Text-to-Speech: Unavailable",'system');
-  if('webkitSpeechRecognition' in window){addLog("✔ Speech Recognition: Available",'system');
-    try{recognition.start();addLog("✔ Mic test: Speak now (auto-stops in 5s)",'system');setTimeout(()=>{try{recognition.stop()}catch(e){}},5000);}catch(e){addLog("❌ Mic failed: "+e.message,'system');}
-  } else addLog("❌ Speech Recognition: Unavailable",'system');
-}
-
-init();
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  window.callflow = new CallFlowEngine();
+});
 </script>
 </body>
 </html>
